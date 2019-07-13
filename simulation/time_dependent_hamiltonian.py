@@ -45,7 +45,7 @@ def get_td_hamiltonian(
     Delta_coeff_terms = 0
 
     for i in range(L):
-        Omega_coeff_terms += 1 / 2 * sz_list[i]
+        Omega_coeff_terms += 1 / 2 * sx_list[i]
         n_i = (sz_list[i] + qeye(1)) / 2
         Delta_coeff_terms -= n_i
 

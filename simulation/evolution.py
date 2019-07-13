@@ -26,8 +26,15 @@ def get_Delta(t: float, args: dict = None):
 
 
 import matplotlib.pyplot as plt
-
+plt.figure()
 plt.plot(t_list, [get_Omega(t) for t in t_list])
+plt.xlabel("t")
+plt.ylabel("Omega")
+plt.figure()
+
+plt.plot(t_list, [get_Delta(t) for t in t_list])
+plt.xlabel("t")
+plt.ylabel("Delta")
 plt.show()
 
 H = get_td_hamiltonian(L, get_Omega, get_Delta)

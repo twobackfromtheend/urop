@@ -40,7 +40,7 @@ def get_hamiltonian(
     sx_list, sy_list, sz_list = get_exp_list(L)
 
     for i in range(L):
-        H += Omega / 2 * sz_list[i]
+        H += Omega / 2 * sx_list[i]
         n_i = (sz_list[i] + qeye(1)) / 2
         H -= Delta * n_i
 
