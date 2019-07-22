@@ -4,7 +4,7 @@ from scipy import constants
 import numpy as np
 from qutip import *
 from hamiltonian import get_hamiltonian
-from states import get_states, is_excited
+from states import get_states, is_excited, get_label_from_state
 import tqdm
 
 PLOT_LIMITS = {
@@ -67,7 +67,7 @@ plt.figure(figsize=(10, 7))
 
 # plt.plot(detuning, all_energies, 'b', alpha=0.6)
 for i in reversed(range(len(states))):
-    label = "".join(["e" if is_excited(spin) else "g" for spin in states[i]])
+    label = get_label_from_state(states[i])
     # color = f'C{i}'
     color = 'g' if 'e' not in label else 'r' if 'g' not in label else 'grey'
     # plt.plot(detuning, all_energies[:, i], color=color, label=label, alpha=0.6)
@@ -91,6 +91,6 @@ plt.tight_layout()
 # plt.savefig(f"L_{L}_Omega_{Omega}.png")
 
 # plt.savefig(f"L_{L}_V_{V:0.3e}_Omega_{Omega}.png", dpi=300)
-plt.savefig(f"paper_2_L_{L}_V_{V:0.3e}.png", dpi=300)
+# plt.savefig(f"paper_2_L_{L}_V_{V:0.3e}.png", dpi=300)
 plt.show()
 

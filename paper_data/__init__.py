@@ -1,13 +1,13 @@
 from scipy import constants
 
 from paper_data.delta import Delta
-from paper_data.interpolation import get_interpolated_function
+from paper_data.interpolation import get_hamiltonian_coeff_fn
 from paper_data.omega import Omega
 
 V = 2 * constants.pi * 24e6
 
 __all__ = [
-    'V', 'Delta', 'Omega', 'get_interpolated_function'
+    'V', 'Delta', 'Omega', 'get_hamiltonian_coeff_fn'
 ]
 
 if __name__ == '__main__':

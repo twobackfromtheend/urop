@@ -58,3 +58,24 @@ def get_td_hamiltonian(
         [Omega_coeff_terms, Omega],
         [Delta_coeff_terms, Delta]
     ]
+
+
+def get_ti_hamiltonian(
+        L: int,
+        Omega: float,
+        Delta: float,
+        V: float
+) -> Qobj:
+    H: Qobj = 0
+    sx_list, sy_list, sz_list = get_exp_list(L)
+
+    for i in range(L):
+        H += Omega / 2 * sx_list[i]
+        n_i = (sz_list[i] + qeye(1)) / 2
+        H -= Delta * n_i
+
+        for j in range(i):
+            n_j = (sz_list[j] + qeye(1)) / 2
+
+            H += V / abs(j - i) ** 6 * n_i * n_j
+    return H
