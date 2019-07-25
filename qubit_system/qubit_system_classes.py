@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
-import tqdm
+from tqdm.autonotebook import tqdm
 from matplotlib import ticker, pyplot as plt
-from qutip import qeye, Qobj, mesolve, Options, fidelity, tensor, expect
+from qutip import qeye, Qobj, mesolve, Options, fidelity, tensor, expect, sesolve
 from qutip.solver import Result
 
 from qubit_system.geometry.base_geometry import BaseGeometry
@@ -63,7 +63,7 @@ class StaticQubitSystem(BaseQubitSystem):
 
     def plot(self):
         self.plot_detuning_energy_levels(
-            plot_state_names=self.N <= 10,
+            plot_state_names=self.N <= 4,
             savefig_name=f"detuning_{self.N}.png",
             show=True
         )
@@ -77,7 +77,7 @@ class StaticQubitSystem(BaseQubitSystem):
 
         omega_zero_all_energies = []
         omega_non_zero_all_energies = []
-        for detuning in tqdm.tqdm(self.Delta):
+        for detuning in tqdm(self.Delta):
             H = self.get_hamiltonian(detuning)
             energies = []
 
@@ -96,8 +96,9 @@ class StaticQubitSystem(BaseQubitSystem):
         for i in reversed(range(len(states))):
             label = get_label_from_state(states[i])
             color = 'g' if 'e' not in label else 'r' if 'g' not in label else 'grey'
+            linewidth = 5 if 'e' not in label or 'g' not in label else 1
             # color = f'C{i}'
-            plt.plot(self.Delta, omega_zero_all_energies[:, i], color=color, label=label, alpha=0.6)
+            plt.plot(self.Delta, omega_zero_all_energies[:, i], color=color, label=label, alpha=0.6, lw=linewidth)
             if not Omega_is_zero:
                 plt.plot(self.Delta, omega_non_zero_all_energies[:, i], color=f'C{i}', ls=':', alpha=0.6)
 
@@ -157,7 +158,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
     def solve(self):
         # noinspection PyTypeChecker
-        self.solve_result = mesolve(
+        self.solve_result = sesolve(
             self.get_hamiltonian(),
             self.psi_0,
             self.t_list,
@@ -199,12 +200,12 @@ class EvolvingQubitSystem(BaseQubitSystem):
             ax2 = axs[2]
             ax2.plot(
                 self.t_list,
-                [fidelity(self.ghz_state, _instantaneous_state)
+                [fidelity(self.ghz_state, _instantaneous_state) ** 2
                  for _instantaneous_state in self.solve_result.states]
             )
             ax2.set_ylabel("Fidelity with GHZ")
             ax2.set_ylim((-0.1, 1.1))
-            ax2.yaxis.set_ticks([0, 1])
+            ax2.yaxis.set_ticks([0, 0.5, 1])
 
         for ax in axs:
             ax.grid()
@@ -220,7 +221,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
             ax = axs[i]
             ax.plot(
                 self.t_list,
-                [fidelity(tensor(state), _instantaneous_state)
+                [fidelity(tensor(state), _instantaneous_state) ** 2
                  for _instantaneous_state in self.solve_result.states]
             )
             label = get_label_from_state(state)
