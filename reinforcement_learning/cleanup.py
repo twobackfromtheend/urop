@@ -11,7 +11,8 @@ import numpy as np
 
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
 
-LOG_FILE = os.getenv('LOG_FILE', Path(__file__).parent / "logs" / "s_baselines.log")
+log_file_env = os.getenv('LOG_FILE')
+LOG_FILE = Path(log_file_env) if log_file_env is not None else Path(__file__).parent / "logs" / "s_baselines.log"
 RESULTS_FOLDER = Path(__file__).parent / "results"
 
 
