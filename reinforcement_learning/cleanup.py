@@ -1,3 +1,4 @@
+import os
 import pickle
 import re
 from collections import deque
@@ -10,7 +11,7 @@ import numpy as np
 
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
 
-LOG_FILE = Path(__file__).parent / "logs" / "s_baselines.log"
+LOG_FILE = os.getenv('LOG_FILE', Path(__file__).parent / "logs" / "s_baselines.log")
 RESULTS_FOLDER = Path(__file__).parent / "results"
 
 
