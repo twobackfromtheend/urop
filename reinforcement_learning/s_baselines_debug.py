@@ -1,3 +1,5 @@
+import os
+
 import gym
 import numpy as np
 from stable_baselines import PPO2
@@ -64,7 +66,7 @@ if __name__ == '__main__':
 
     # env = DummyVecEnv([lambda: make_gym_env()])  # The algorithms require a vectorized environment to run
 
-    n_cpu = 12
+    n_cpu = int(os.getenv('N_CPU'))
     env = SubprocVecEnv([lambda: make_gym_env() for i in range(n_cpu)])
 
     model = PPO2(
