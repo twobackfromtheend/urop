@@ -3,7 +3,8 @@ from typing import Tuple
 
 import gym
 import numpy as np
-from qutip import Qobj, fidelity
+# from quicktracer import trace
+from qutip import Qobj
 
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.qubit_system_classes import EvolvingQubitSystem
@@ -37,7 +38,7 @@ class EvolvingQubitEnv(gym.Env):
         }
         self.step_number = 0
 
-        self.action_space = gym.spaces.Box(low=np.array([0, -100]), high=np.array([100, 100]))
+        self.action_space = gym.spaces.Box(low=np.array([0, -10]), high=np.array([30, 10]))
         self.observation_space = gym.spaces.Discrete(self.required_steps)
 
     def step(self, action: np.ndarray) -> Tuple[ObservationType, float, bool, object]:
@@ -79,10 +80,21 @@ class EvolvingQubitEnv(gym.Env):
         evolving_qubit_system = self._create_evolving_qubit_system()
         evolving_qubit_system.solve()
 
-        final_state = evolving_qubit_system.solve_result.states[-1]
-        fidelity_achieved = fidelity(final_state, self.evolving_qubit_system_kwargs['ghz_state']) ** 2
-        print(f"fidelity_achieved: {fidelity_achieved:.3f}")
-        return fidelity_achieved
+        fidelity_achieved = evolving_qubit_system.get_fidelity_with("ghz")
+        fidelity_with_ground = evolving_qubit_system.get_fidelity_with("ground")
+        fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")
+
+        gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
+                        f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
+
+        if fidelity_achieved > 0.5:
+            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}, \n"
+                            f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited}), \n"
+                            f"reward: {fidelity_with_ground * fidelity_with_excited} \n"
+                            f"actions: {self.recorded_steps}\n")
+        # trace(fidelity_achieved)
+        # return fidelity_achieved
+        return fidelity_with_ground * fidelity_with_excited
 
     def _create_evolving_qubit_system(self):
         t_list = self.evolving_qubit_system_kwargs['t_list']
