@@ -1,3 +1,5 @@
+import os
+
 import gym
 import numpy as np
 
@@ -5,6 +7,7 @@ from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines import PPO2, TRPO, ACKTR, DDPG
 
+from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.utils.states import get_ghz_state
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
@@ -13,6 +16,8 @@ from reinforcement_learning.cleanup import process_log_file
 gym.logger.setLevel(gym.logger.INFO)
 
 if __name__ == '__main__':
+    job_id = os.getenv("PBS_JOBID")
+    trigger_event("job_progress", value1="Job started", value2=job_id)
 
     def evaluate(model, episodes: int, max_steps: int = 1e6):
         """
@@ -55,8 +60,8 @@ if __name__ == '__main__':
 
     def make_gym_env():
         N = 4
-        t = 10
-        env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, 20),
+        t = 12
+        env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, 50),
                                ghz_state=get_ghz_state(N))
 
         # env = gym.make('CartPole-v0')
@@ -74,15 +79,19 @@ if __name__ == '__main__':
         MlpLstmPolicy, env,
         learning_rate=3e-3,
         verbose=1,
-        nminibatches=1,
+        nminibatches=6,
         # policy_kwargs={'n_lstm': 128},
         tensorboard_log='./tensorboard_logs'
     )
 
     evaluate(model, episodes=10)
 
-    model.learn(total_timesteps=600000, log_interval=3)
+    trigger_event("job_progress", value1="Starting learn", value2=job_id)
+
+    model.learn(total_timesteps=600000 * 5, log_interval=3)
 
     evaluate(model, episodes=10)
 
     process_log_file(make_gym_env())
+
+    trigger_event("job_progress", value1="Job ended", value2=job_id)

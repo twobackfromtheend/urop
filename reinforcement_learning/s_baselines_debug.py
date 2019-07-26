@@ -6,6 +6,7 @@ from stable_baselines import PPO2
 from stable_baselines.common.policies import MlpLstmPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv
 
+from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.utils.states import get_ghz_state
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
@@ -14,6 +15,8 @@ from reinforcement_learning.cleanup import process_log_file
 gym.logger.setLevel(gym.logger.INFO)
 
 if __name__ == '__main__':
+    job_id = os.getenv("PBS_JOBID")
+    trigger_event("job_progress", value1="Job started", value2=job_id)
 
     def evaluate(model, episodes: int, max_steps: int = 1e6):
         """
@@ -79,8 +82,11 @@ if __name__ == '__main__':
 
     evaluate(model, episodes=10)
 
+    trigger_event("job_progress", value1="Starting learn", value2=job_id)
+
     model.learn(total_timesteps=10000, log_interval=3)
 
     evaluate(model, episodes=10)
 
     process_log_file(make_gym_env())
+    trigger_event("job_progress", value1="Job ended", value2=job_id)
