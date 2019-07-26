@@ -8,7 +8,8 @@ from qutip import qeye, Qobj, mesolve, Options, fidelity, tensor, expect, sesolv
 from qutip.solver import Result
 
 from qubit_system.geometry.base_geometry import BaseGeometry
-from qubit_system.utils.states import get_exp_list, get_ground_states, get_states, get_label_from_state, get_ghz_state
+from qubit_system.utils.states import get_exp_list, get_ground_states, get_states, get_label_from_state, get_ghz_state, \
+    get_excited_states
 from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interpolation
 
 PLOT_FOLDER = Path(__file__).parent.parent / 'plots'
@@ -232,6 +233,22 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         axs[0].xaxis.set_major_formatter(ticker.EngFormatter('s'))
         plt.tight_layout()
+
+    def get_fidelity_with(self, target_state: str = "ghz") -> float:
+        """
+        :param target_state: One of "ghz", "ground", and "excited"
+        :return:
+        """
+        assert (self.solve_result is not None), "solve_result attribute cannot be None (call solve method)"
+        final_state = self.solve_result.states[-1]
+        if target_state == "ghz":
+            return fidelity(final_state, self.ghz_state) ** 2
+        elif target_state == "ground":
+            return fidelity(final_state, tensor(*get_ground_states(self.N))) ** 2
+        elif target_state == "excited":
+            return fidelity(final_state, tensor(*get_excited_states(self.N))) ** 2
+        else:
+            raise ValueError(f"target_state has to be one of 'ghz', 'ground', or 'excited', not {target_state}.")
 
 
 if __name__ == '__main__':

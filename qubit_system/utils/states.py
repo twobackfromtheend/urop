@@ -36,6 +36,10 @@ def get_ground_states(N: int) -> List[Qobj]:
     return [basis(2, 1) for _ in range(N)]
 
 
+def get_excited_states(N: int) -> List[Qobj]:
+    return [basis(2, 0) for _ in range(N)]
+
+
 def get_states(N: int) -> List[List[Qobj]]:
     """
     Returns all basis states.
