@@ -1,0 +1,7 @@
+gym
+matplotlib
+numpy
+qutip
+scipy
+stable_baselines
+tqdm
