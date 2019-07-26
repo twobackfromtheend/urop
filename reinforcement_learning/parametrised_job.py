@@ -2,9 +2,10 @@ import os
 
 import gym
 import numpy as np
-from stable_baselines import PPO2
-from stable_baselines.common.policies import MlpLstmPolicy
-from stable_baselines.common.vec_env import SubprocVecEnv
+
+from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy
+from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines import PPO2, TRPO, ACKTR, DDPG
 
 from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
@@ -15,7 +16,7 @@ from reinforcement_learning.cleanup import process_log_file
 gym.logger.setLevel(gym.logger.INFO)
 
 if __name__ == '__main__':
-    job_id = os.getenv("PBS_JOBID", "LOCAL_JOB")
+    job_id = os.getenv("PBS_JOBID")
     trigger_event("job_progress", value1="Job started", value2=job_id)
 
     def evaluate(model, episodes: int, max_steps: int = 1e6):
@@ -56,20 +57,17 @@ if __name__ == '__main__':
 
         return mean_reward
 
+    N = int(os.getenv("QUBIT_N"))
+    t = float(os.getenv("QUBIT_T"))
+    t_num = int(os.getenv("QUBIT_T_NUM"))
 
     def make_gym_env():
-        N = 2
-        t = 8
-        env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, 10),
+        env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, t_num),
                                ghz_state=get_ghz_state(N))
-
-        # env = gym.make('CartPole-v0')
         return env
 
 
-    # env = DummyVecEnv([lambda: make_gym_env()])  # The algorithms require a vectorized environment to run
-
-    n_cpu = int(os.getenv('N_CPU', 4))
+    n_cpu = int(os.getenv('N_CPU'))
     env = SubprocVecEnv([lambda: make_gym_env() for i in range(n_cpu)])
 
     model = PPO2(
@@ -80,13 +78,15 @@ if __name__ == '__main__':
         tensorboard_log='./tensorboard_logs'
     )
 
-    evaluate(model, episodes=10)
+    evaluate(model, episodes=20)
 
     trigger_event("job_progress", value1="Starting learn", value2=job_id)
 
-    model.learn(total_timesteps=10000, log_interval=3)
+    total_timesteps = int(os.getenv("MODEL_LEARN_TIMESTEPS"))
+    model.learn(total_timesteps=total_timesteps, log_interval=3)
 
-    evaluate(model, episodes=10)
+    evaluate(model, episodes=20)
 
     process_log_file(make_gym_env())
+
     trigger_event("job_progress", value1="Job ended", value2=job_id)
