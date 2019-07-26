@@ -63,6 +63,8 @@ def process_log_file(env: EvolvingQubitEnv):
     current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
     data_filepath = RESULTS_FOLDER / (current_datetime + ".pkl")
 
+    RESULTS_FOLDER.mkdir(exist_ok=True)
+
     with data_filepath.open("wb") as f:
         pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
         print(f"Saved best protocol and data to {data_filepath.name}")
