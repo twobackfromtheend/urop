@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     evaluate(model, episodes=10)
 
-    model.learn(total_timesteps=1000, log_interval=3)
+    model.learn(total_timesteps=10000, log_interval=3)
 
     evaluate(model, episodes=10)
 
