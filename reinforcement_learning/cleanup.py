@@ -46,6 +46,9 @@ def process_log_file(env: EvolvingQubitEnv):
                 protocols.append(Protocol(fidelity_achieved, Omega, Delta))
 
     # print(protocols)
+    if len(protocols) == 0:
+        print("Could not find any protocols.")
+        return
 
     best_protocol = max(protocols, key=attrgetter('fidelity'))
 
