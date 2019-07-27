@@ -84,8 +84,8 @@ class EvolvingQubitEnv(gym.Env):
         fidelity_with_ground = evolving_qubit_system.get_fidelity_with("ground")
         fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")
 
-        gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
-                        f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
+        # gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
+        #                 f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
 
         if fidelity_achieved > 0.5:
             gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}, \n"
