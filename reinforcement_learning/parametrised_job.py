@@ -3,10 +3,9 @@ import time
 
 import gym
 import numpy as np
-
-from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy
-from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines import PPO2, TRPO, ACKTR, DDPG
+from stable_baselines import PPO2
+from stable_baselines.common.policies import MlpLstmPolicy
+from stable_baselines.common.vec_env import SubprocVecEnv
 
 from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
