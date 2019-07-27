@@ -1,4 +1,5 @@
 import os
+import time
 
 import gym
 import numpy as np
@@ -18,6 +19,7 @@ gym.logger.setLevel(gym.logger.INFO)
 if __name__ == '__main__':
     job_id = os.getenv("PBS_JOBID")
     trigger_event("job_progress", value1="Job started", value2=job_id)
+    start_time = time.time()
 
     def evaluate(model, episodes: int, max_steps: int = 1e6):
         """
@@ -67,8 +69,11 @@ if __name__ == '__main__':
         return env
 
 
+    generating_envs_start_time = time.time()
     n_cpu = int(os.getenv('N_CPU'))
-    env = SubprocVecEnv([lambda: make_gym_env() for i in range(n_cpu)])
+    env = SubprocVecEnv([lambda: make_gym_env() for i in range(n_cpu)], start_method="spawn")
+    generating_envs_end_time = time.time()
+    print(f"Generated {n_cpu} envs in {(generating_envs_end_time - generating_envs_start_time) / 1000:.3f}s")
 
     model = PPO2(
         MlpLstmPolicy, env,
@@ -80,10 +85,12 @@ if __name__ == '__main__':
 
     evaluate(model, episodes=20)
 
-    trigger_event("job_progress", value1="Starting learn", value2=job_id)
+    model_learn_start_time = time.time()
 
     total_timesteps = int(os.getenv("MODEL_LEARN_TIMESTEPS"))
     model.learn(total_timesteps=total_timesteps, log_interval=3)
+    model_learn_end_time = time.time()
+    print(f"Learned for {total_timesteps} steps in {(model_learn_end_time - model_learn_start_time) / 1000:.3f}s")
 
     evaluate(model, episodes=20)
 
