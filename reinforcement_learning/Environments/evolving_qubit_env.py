@@ -41,6 +41,8 @@ class EvolvingQubitEnv(gym.Env):
         self.action_space = gym.spaces.Box(low=np.array([0, -10]), high=np.array([30, 10]))
         self.observation_space = gym.spaces.Discrete(self.required_steps)
 
+        self._maximum_fidelity_achieved = 0.5
+
     def step(self, action: np.ndarray) -> Tuple[ObservationType, float, bool, object]:
         self.recorded_steps['Omega'].append(action[0])
         self.recorded_steps['Delta'].append(action[1])
@@ -87,11 +89,12 @@ class EvolvingQubitEnv(gym.Env):
         # gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
         #                 f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
 
-        if fidelity_achieved > 0.5:
+        if fidelity_achieved > self._maximum_fidelity_achieved:
             gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}, \n"
                             f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited}), \n"
                             f"reward: {fidelity_with_ground * fidelity_with_excited} \n"
                             f"actions: {self.recorded_steps}\n")
+            self._maximum_fidelity_achieved = fidelity_achieved
         # trace(fidelity_achieved)
         # return fidelity_achieved
         return fidelity_with_ground * fidelity_with_excited
