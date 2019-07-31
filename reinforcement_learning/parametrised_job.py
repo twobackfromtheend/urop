@@ -7,6 +7,7 @@ from stable_baselines import PPO2
 from stable_baselines.common.policies import MlpLstmPolicy
 from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
 
+import interaction_constants
 from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.utils.states import get_ghz_state
@@ -24,13 +25,15 @@ if __name__ == '__main__':
     N = int(os.getenv("QUBIT_N"))
     t = float(os.getenv("QUBIT_T"))
     t_num = int(os.getenv("QUBIT_T_NUM"))
+    N_RYD = int(os.getenv("QUBIT_N_RYD"))
+    C6 = interaction_constants.get_C6(N_RYD)
+    LATTICE_SPACING = 4e-6
 
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
-
     def make_gym_env():
-        env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, t_num),
+        env = EvolvingQubitEnv(N=N, V=C6, geometry=RegularLattice1D(LATTICE_SPACING), t_list=np.linspace(0, t, t_num),
                                ghz_state=get_ghz_state(N))
         return env
 
