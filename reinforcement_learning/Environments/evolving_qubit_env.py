@@ -122,7 +122,7 @@ class EvolvingQubitEnv(gym.Env):
 
     def _create_evolving_qubit_system(self):
         t_list = self.evolving_qubit_system_kwargs['t_list']
-        _Omegas = np.array(self.recorded_steps['Omega'][1:] + [0])
+        _Omegas = np.array(self.recorded_steps['Omega'])
         Omega = get_hamiltonian_coeff_linear_interpolation(t_list, self.recorded_steps['Omega'])
         _Deltas = np.array(self.recorded_steps['Delta'])
         Delta = get_hamiltonian_coeff_linear_interpolation(t_list, _Deltas)
