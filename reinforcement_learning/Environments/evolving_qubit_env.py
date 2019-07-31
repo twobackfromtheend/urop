@@ -31,8 +31,8 @@ class EvolvingQubitEnv(gym.Env):
             'psi_0': psi_0,
         }
 
-        self.required_steps = len(t_list) - 1
-        # Actions for last t not needed: Omega = 0, Delta repeated from previous step
+        self.required_steps = len(t_list)
+        # Actions for all ts needed, Omega forced to 0 at start and end.
 
         self.recorded_steps = {
             'Omega': [],
@@ -53,7 +53,9 @@ class EvolvingQubitEnv(gym.Env):
 
     def step(self, action: np.ndarray) -> Tuple[ObservationType, float, bool, object]:
         action = self._get_action_from_normalised_action(action)
-        self.recorded_steps['Omega'].append(action[0])
+        self.recorded_steps['Omega'].append(
+            0 if (self.step_number == 0 or self.step_number == self.required_steps - 1) else action[0]
+        )  # Force Omega to start and end at 0
         self.recorded_steps['Delta'].append(action[1])
         self.step_number += 1
 
@@ -120,9 +122,9 @@ class EvolvingQubitEnv(gym.Env):
 
     def _create_evolving_qubit_system(self):
         t_list = self.evolving_qubit_system_kwargs['t_list']
-        _Omegas = np.array([0] + self.recorded_steps['Omega'][1:] + [0])
-        Omega = get_hamiltonian_coeff_linear_interpolation(t_list, self.recorded_steps['Omega'] + [0])
-        _Deltas = np.array(self.recorded_steps['Delta'] + [self.recorded_steps['Delta'][-1]])
+        _Omegas = np.array(self.recorded_steps['Omega'][1:] + [0])
+        Omega = get_hamiltonian_coeff_linear_interpolation(t_list, self.recorded_steps['Omega'])
+        _Deltas = np.array(self.recorded_steps['Delta'])
         Delta = get_hamiltonian_coeff_linear_interpolation(t_list, _Deltas)
 
         # print("o:", _Omegas)

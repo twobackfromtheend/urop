@@ -38,9 +38,7 @@ def process_log_file(env: EvolvingQubitEnv):
                 Omega = eval(_search.group(1))
                 Delta = eval(_search.group(2))
 
-                Omega += [0]
                 Omega = np.array(Omega)
-                Delta += [Delta[-1]]
                 Delta = np.array(Delta)
 
                 protocols.append(Protocol(fidelity_achieved, Omega, Delta))
