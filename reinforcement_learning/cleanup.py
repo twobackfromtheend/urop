@@ -80,6 +80,7 @@ if __name__ == '__main__':
     N = 4
     t = 5
     env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, 20),
+                           Omega_range=(0, 1), Delta_range=(-1, 1),
                            ghz_state=get_ghz_state(N))
 
     process_log_file(env)

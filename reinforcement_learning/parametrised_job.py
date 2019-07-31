@@ -28,12 +28,18 @@ if __name__ == '__main__':
     N_RYD = int(os.getenv("QUBIT_N_RYD"))
     C6 = interaction_constants.get_C6(N_RYD)
     LATTICE_SPACING = 4e-6
+    OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
+    DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
+
+    assert len(OMEGA_RANGE) == len(DELTA_RANGE) == 2, f"QUBIT_OMEGA_RANGE and QUBIT_DELTA_RANGE must be of length 2, " \
+                                                      f"not {len(OMEGA_RANGE)} and {len(DELTA_RANGE)}."
 
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
     def make_gym_env():
         env = EvolvingQubitEnv(N=N, V=C6, geometry=RegularLattice1D(LATTICE_SPACING), t_list=np.linspace(0, t, t_num),
+                               Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
                                ghz_state=get_ghz_state(N))
         return env
 
