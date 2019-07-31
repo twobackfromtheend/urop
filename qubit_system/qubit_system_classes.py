@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 from matplotlib import ticker, pyplot as plt
 from qutip import qeye, Qobj, mesolve, Options, fidelity, tensor, expect, sesolve
 from qutip.solver import Result
@@ -113,10 +113,18 @@ class StaticQubitSystem(BaseQubitSystem):
             plt.legend()
 
         plt.grid()
+        ax = plt.gca()
+        scaled_xaxis_ticker = ticker.EngFormatter(unit="Hz")
+        scaled_yaxis_ticker = ticker.EngFormatter(unit="Hz")
+        ax.xaxis.set_major_formatter(scaled_xaxis_ticker)
+        ax.yaxis.set_major_formatter(scaled_yaxis_ticker)
 
-        plt.title(rf"Plot of eigenvalues of $H$ with $V = {self.V:0.2e}$, $\Omega = {self.Omega:0.2e}$ ")
-        plt.xlabel("Detuning $\Delta$ (Hz)")
-        plt.ylabel("Energy (Hz)")
+        # plt.title(rf"Energy spectrum with $N = {self.N}$, $V = {self.V:0.2e}$, $\Omega = {self.Omega:0.2e}$")
+        _m, _s = f"{self.V:0.2e}".split('e')
+        V_text = rf"{_m:s} \times 10^{{{int(_s):d}}}"
+        plt.title(rf"Energy spectrum with $N = {self.N}$, $V = {V_text:s}$ Hz")
+        plt.xlabel(r"Detuning $\Delta$")
+        plt.ylabel("Eigenenergy")
         plt.tight_layout()
 
 
