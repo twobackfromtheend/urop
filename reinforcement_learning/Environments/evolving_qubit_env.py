@@ -110,12 +110,12 @@ class EvolvingQubitEnv(gym.Env):
         fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")
 
         if self.verbose:
-            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
-                            f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
+            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.4f}, "
+                            f"with: (g: {fidelity_with_ground:.4f}), (e: {fidelity_with_excited:.4f})")
 
         if fidelity_achieved > self._maximum_fidelity_achieved:
-            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}, \n"
-                            f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited}), \n"
+            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.4f}, \n"
+                            f"fidelity with: (g: {fidelity_with_ground:.5f}), (e: {fidelity_with_excited:.5f}), \n"
                             f"reward: {fidelity_with_ground * fidelity_with_excited} \n"
                             f"actions: {self.recorded_steps}\n")
             self._maximum_fidelity_achieved = fidelity_achieved
