@@ -36,6 +36,20 @@ if __name__ == '__main__':
     assert len(OMEGA_RANGE) == len(DELTA_RANGE) == 2, f"QUBIT_OMEGA_RANGE and QUBIT_DELTA_RANGE must be of length 2, " \
                                                       f"not {len(OMEGA_RANGE)} and {len(DELTA_RANGE)}."
 
+    print(
+        "Parameters:\n"
+        f"\tjob_id: {job_id}\n"
+        f"\tn_envs: {n_envs}\n"
+        f"\tEnvType: {EnvType.__name__}\n"
+        f"\tENV_VERBOSE: {ENV_VERBOSE}\n"
+        f"\tQUBIT_N: {N}\n"
+        f"\tQUBIT_T: {t}\n"
+        f"\tQUBIT_T_NUM: {t_num}\n"
+        f"\tQUBIT_N_RYD: {N_RYD}\n"
+        f"\tQUBIT_OMEGA_RANGE: {OMEGA_RANGE}\n"
+        f"\tQUBIT_DELTA_RANGE: {DELTA_RANGE}\n"
+    )
+
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
