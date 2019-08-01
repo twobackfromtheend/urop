@@ -20,8 +20,9 @@ gym.logger.setLevel(gym.logger.INFO)
 
 if __name__ == '__main__':
     job_id = os.getenv("PBS_JOBID")
-    n_envs = int(os.getenv('N_ENVS'))
-    EnvType = SubprocVecEnv if bool(eval(os.getenv('USE_SUBPROC_ENV', "False"))) else DummyVecEnv
+    n_envs = int(os.getenv('ENV_N'))
+    EnvType = SubprocVecEnv if bool(eval(os.getenv('ENV_USE_SUBPROC', "False"))) else DummyVecEnv
+    ENV_VERBOSE = bool(eval(os.getenv("ENV_VERBOSE")))
 
     N = int(os.getenv("QUBIT_N"))
     t = float(os.getenv("QUBIT_T"))
@@ -31,8 +32,6 @@ if __name__ == '__main__':
     LATTICE_SPACING = 4e-6
     OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
     DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
-
-    ENV_VERBOSE = int(os.getenv("ENV_VERBOSE"))
 
     assert len(OMEGA_RANGE) == len(DELTA_RANGE) == 2, f"QUBIT_OMEGA_RANGE and QUBIT_DELTA_RANGE must be of length 2, " \
                                                       f"not {len(OMEGA_RANGE)} and {len(DELTA_RANGE)}."
