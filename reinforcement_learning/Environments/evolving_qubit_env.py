@@ -21,7 +21,9 @@ class EvolvingQubitEnv(gym.Env):
     def __init__(self, N: int, V: float, geometry: BaseGeometry,
                  t_list: np.ndarray, ghz_state: Qobj,
                  Omega_range: Tuple[float, float], Delta_range: Tuple[float, float],
-                 psi_0: Qobj = None, ):
+                 psi_0: Qobj = None, verbose: bool = False):
+        self.verbose = verbose
+
         self.evolving_qubit_system_kwargs = {
             'N': N,
             'V': V,
@@ -107,8 +109,9 @@ class EvolvingQubitEnv(gym.Env):
         fidelity_with_ground = evolving_qubit_system.get_fidelity_with("ground")
         fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")
 
-        # gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
-        #                 f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
+        if self.verbose:
+            gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}\n"
+                            f"fidelity with: (g: {fidelity_with_ground}), (e: {fidelity_with_excited})")
 
         if fidelity_achieved > self._maximum_fidelity_achieved:
             gym.logger.info(f"fidelity_achieved: {fidelity_achieved:.3f}, \n"
