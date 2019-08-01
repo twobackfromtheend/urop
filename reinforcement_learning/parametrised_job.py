@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 
 import gym
 import numpy as np
@@ -37,6 +38,7 @@ if __name__ == '__main__':
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
+
     def make_gym_env():
         env = EvolvingQubitEnv(N=N, V=C6, geometry=RegularLattice1D(LATTICE_SPACING), t_list=np.linspace(0, t, t_num),
                                Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
@@ -54,6 +56,7 @@ if __name__ == '__main__':
         learning_rate=3e-3,
         verbose=1,
         nminibatches=1,
+        n_steps=t_num,
         tensorboard_log='./tensorboard_logs'
     )
 
@@ -61,7 +64,8 @@ if __name__ == '__main__':
 
     model_learn_start_time = time.time()
     total_timesteps = int(os.getenv("MODEL_LEARN_TIMESTEPS"))
-    model.learn(total_timesteps=total_timesteps, log_interval=3)
+    model.learn(total_timesteps=total_timesteps, log_interval=3,
+                tb_log_name=f"{job_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     model_learn_end_time = time.time()
     print(f"\nLearned for {total_timesteps} steps in {model_learn_end_time - model_learn_start_time:.3f}s")
 
