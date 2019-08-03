@@ -78,13 +78,21 @@ class GHZStateType(Enum):
     ALTERNATING = 1
 
 
-def get_ghz_state(N: int, _type: GHZStateType = GHZStateType.STANDARD) -> Qobj:
+def get_ghz_state(N: int, symmetric: bool = True, _type: GHZStateType = GHZStateType.STANDARD) -> Qobj:
     if _type == GHZStateType.STANDARD:
-        return ghz_state(N)
+        ghz_1 = tensor([basis(2, 1) for _ in range(N)])
+        ghz_2 = tensor([basis(2, 0) for _ in range(N)])
+        if symmetric:
+            return (ghz_1 + ghz_2).unit()
+        else:
+            return (ghz_1 - ghz_2).unit()
     elif _type == GHZStateType.ALTERNATING:
         ghz_1 = tensor([basis(2, 1) if _ % 2 == 0 else basis(2, 0) for _ in range(N)])
         ghz_2 = tensor([basis(2, 1) if _ % 2 == 1 else basis(2, 0) for _ in range(N)])
-        return (ghz_1 + ghz_2).unit()
+        if symmetric:
+            return (ghz_1 + ghz_2).unit()
+        else:
+            return (ghz_1 - ghz_2).unit()
     else:
         raise ValueError(f"Unknown _type: {_type}. _type has to be GHZStateType.")
 

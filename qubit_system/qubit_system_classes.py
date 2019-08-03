@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -175,74 +175,101 @@ class EvolvingQubitSystem(BaseQubitSystem):
             options=Options(store_states=True, nsteps=100000)
         )
 
-    def plot(self):
-        if self.solve_result is None:
-            self.plot_Omega_and_Delta(savefig_name="omega_and_delta.png", show=True)
-        else:
-            self.plot_Omega_and_Delta(savefig_name="omega_and_delta.png")
-            self.plot_state_overlaps(savefig_name="state_overlaps.png", show=True)
-
     @plotting_decorator
-    def plot_Omega_and_Delta(self):
+    def plot(self, with_antisymmetric_ghz: Qobj = None):
+        assert self.solve_result is not None, "solve_result attribute cannot be None (call solve method)"
+        rows = 3
+        fig, axs = plt.subplots(rows, 1, sharex='all', figsize=(15, rows * 3))
+        self.plot_Omega_and_Delta(axs[0])
+        self.plot_ghz_states_overlaps(axs[1], with_antisymmetric_ghz)
+        self.plot_basis_states_overlaps(axs[2])
+
+        for ax in axs:
+            ax.grid()
+        plt.xlabel('Time')
+        plt.tight_layout()
+
+    def plot_Omega_and_Delta(self, ax):
         """
         Plots Omega and Delta as a function of time.
         Includes overlap with GHZ state if `self.solve_result` is not None (self.solve has been called).
         :return:
         """
-        rows = 2 if self.solve_result is None else 3
-        fig, axs = plt.subplots(rows, 1, sharex='all', figsize=(15, rows * 3), num="Omega and Delta")
+        ax.xaxis.set_major_formatter(ticker.EngFormatter('s'))
         plt.xlabel('Time')
 
-        ax0 = axs[0]
-        ax0.plot(self.t_list, [self.Omega(t) for t in self.t_list])
-        ax0.set_ylabel("Omega")
-        ax0.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
+        ax.plot(self.t_list, [self.Omega(t) for t in self.t_list], label=r"$\Omega$", lw=3)
+        ax.plot(self.t_list, [self.Delta(t) for t in self.t_list], label=r"$\Delta$", lw=3)
+        ax.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
+        ax.legend()
+        ax.set_title("Control parameters")
 
-        ax1 = axs[1]
-        ax1.plot(self.t_list, [self.Delta(t) for t in self.t_list])
-        ax1.set_ylabel("Delta")
-        ax1.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
+    def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: Optional[Qobj]):
+        labelled_states = [(self.ghz_state, r"$\psi_{\mathrm{GHZ}}^{\mathrm{s}}$")]
+        if with_antisymmetric_ghz is not None:
+            labelled_states.append((with_antisymmetric_ghz, r"$\psi_{\mathrm{GHZ}}^{\mathrm{a}}$"))
 
-        ax0.xaxis.set_major_formatter(ticker.EngFormatter('s'))
-
-        if self.solve_result is not None:
-            ax2 = axs[2]
-            ax2.plot(
-                self.t_list,
-                [fidelity(self.ghz_state, _instantaneous_state) ** 2
-                 for _instantaneous_state in self.solve_result.states]
-            )
-            ax2.set_ylabel("Fidelity with GHZ")
-            ax2.set_ylim((-0.1, 1.1))
-            ax2.yaxis.set_ticks([0, 0.5, 1])
-
-        for ax in axs:
-            ax.grid()
-
-        plt.tight_layout()
-
-    @plotting_decorator
-    def plot_state_overlaps(self):
-        states = get_states(self.N)
-        fig, axs = plt.subplots(len(states), 1, sharex='all', figsize=(15, 3 * 2 ** self.N + 3), num="State overlaps")
-
-        for i, state in enumerate(states):
-            ax = axs[i]
+        for _state, _label in labelled_states:
             ax.plot(
                 self.t_list,
-                [fidelity(tensor(state), _instantaneous_state) ** 2
-                 for _instantaneous_state in self.solve_result.states]
+                [fidelity(_state, _instantaneous_state) ** 2
+                 for _instantaneous_state in self.solve_result.states],
+                label=_label,
+                lw=3,
             )
+        ax.set_ylabel("Fidelity")
+        ax.set_title("Fidelity with GHZ states")
+        ax.set_ylim((-0.1, 1.1))
+        ax.yaxis.set_ticks([0, 0.5, 1])
+        ax.legend()
+
+    def plot_basis_states_overlaps(self, ax):
+        states = get_states(self.N)
+        fidelities = []
+
+        plot_individual_orthogonal_state_labels = len(states) <= 4
+        plotted_others = False
+        for i, state in enumerate(states):
             label = get_label_from_state(state)
-            ax.set_ylabel(label)
-            ax.set_ylim((-0.1, 1.1))
-            ax.yaxis.set_ticks([0, 1])
-            ax.grid()
+            state_fidelities = [fidelity(tensor(state), _instantaneous_state) ** 2
+                                for _instantaneous_state in self.solve_result.states]
+            if 'e' not in label or 'g' not in label:
+                fidelities.append(state_fidelities)
 
-        axs[0].xaxis.set_major_formatter(ticker.EngFormatter('s'))
-        plt.tight_layout()
+            plot_label = r"$P_{" + f"{label.upper()}" + "}$" \
+                if plot_individual_orthogonal_state_labels or ('e' not in label or 'g' not in label) else 'Others'
+            if plot_label == 'Others':
+                if plotted_others:
+                    plot_label = None
+                else:
+                    plotted_others = True
 
-    def get_fidelity_with(self, target_state: str = "ghz") -> float:
+            ax.plot(
+                self.t_list,
+                state_fidelities,
+                label=plot_label,
+                color='g' if 'e' not in label else 'r' if 'g' not in label else 'k',
+                linewidth=3 if 'e' not in label or 'g' not in label else 1,
+                alpha=0.5
+            )
+
+        fidelities_sum = np.array(fidelities).sum(axis=0)
+        ax.plot(self.t_list, fidelities_sum,
+                label="$P_{EE} + P_{GG}$",
+                color='k', linestyle="--", linewidth=3, alpha=0.7)
+
+        ax.set_ylabel("Fidelity")
+        ax.set_title("Fidelity with basis states")
+        ax.set_ylim((-0.1, 1.1))
+        ax.yaxis.set_ticks([0, 0.5, 1])
+
+        # ax.legend()
+        handles, labels = ax.get_legend_handles_labels()
+        # sort both labels and handles by labels
+        labels, handles = zip(*sorted(zip(labels, handles)))
+        ax.legend(handles, labels)
+
+    def get_fidelity_with(self, target_state: Union[str, Qobj] = "ghz") -> float:
         """
         :param target_state: One of "ghz", "ground", and "excited"
         :return:
@@ -255,6 +282,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
             return fidelity(final_state, tensor(*get_ground_states(self.N))) ** 2
         elif target_state == "excited":
             return fidelity(final_state, tensor(*get_excited_states(self.N))) ** 2
+        elif isinstance(target_state, Qobj):
+            return fidelity(final_state, target_state) ** 2
         else:
             raise ValueError(f"target_state has to be one of 'ghz', 'ground', or 'excited', not {target_state}.")
 
@@ -277,23 +306,24 @@ if __name__ == '__main__':
     # )
     # s_qs.plot()
 
-    s_qs = StaticQubitSystem(
-        N=2, V=1,
-        geometry=RegularLattice1D(),
-        Omega=1, Delta=np.linspace(-1, 1, 50)
-    )
-    s_qs.plot()
+    # s_qs = StaticQubitSystem(
+    #     N=2, V=1,
+    #     geometry=RegularLattice1D(),
+    #     Omega=1, Delta=np.linspace(-1, 1, 50)
+    # )
+    # s_qs.plot()
 
     t = 1
+    N = 4
     e_qs = EvolvingQubitSystem(
-        N=2, V=1, geometry=RegularLattice1D(),
+        N=N, V=1, geometry=RegularLattice1D(),
         Omega=get_hamiltonian_coeff_linear_interpolation([0, t / 4, t * 3 / 4, t], [0, 1, 1, 0]),
         Delta=get_hamiltonian_coeff_linear_interpolation([0, t], [-1, 1]),
         t_list=np.linspace(0, 1, 100),
-        ghz_state=get_ghz_state(2)
+        ghz_state=get_ghz_state(N)
     )
     e_qs.solve()
-    e_qs.plot()
+    e_qs.plot(get_ghz_state(N, False), show=True)
 
     # t = 1
     # e_qs = EvolvingQubitSystem(
