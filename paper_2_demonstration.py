@@ -1,16 +1,11 @@
-from collections import defaultdict
-
-from matplotlib import ticker
 import matplotlib.pyplot as plt
-from scipy import constants
 import numpy as np
-from qutip import *
-from hamiltonian import get_hamiltonian
+from matplotlib import ticker
+from scipy import constants
+
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 from qubit_system.qubit_system_classes import StaticQubitSystem
-from states import get_states, is_excited, get_label_from_state
-import tqdm
 
 
 def plot_n_4():
