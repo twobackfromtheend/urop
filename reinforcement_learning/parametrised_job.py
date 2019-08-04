@@ -6,7 +6,7 @@ import gym
 import numpy as np
 from stable_baselines import PPO2
 from stable_baselines.common.policies import MlpLstmPolicy
-from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
+from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecCheckNan
 
 import interaction_constants
 from ifttt_webhook import trigger_event
@@ -62,6 +62,7 @@ if __name__ == '__main__':
 
     generating_envs_start_time = time.time()
     env = EnvType([lambda: make_gym_env() for i in range(n_envs)])
+    env = VecCheckNan(env, raise_exception=True)
     generating_envs_end_time = time.time()
     print(f"Generated {n_envs} envs in {generating_envs_end_time - generating_envs_start_time:.3f}s")
 
