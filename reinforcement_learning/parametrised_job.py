@@ -33,6 +33,8 @@ if __name__ == '__main__':
     OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
     DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
 
+    LEARNING_RATE = float(os.getenv("POLICY_LR"))
+
     assert len(OMEGA_RANGE) == len(DELTA_RANGE) == 2, f"QUBIT_OMEGA_RANGE and QUBIT_DELTA_RANGE must be of length 2, " \
                                                       f"not {len(OMEGA_RANGE)} and {len(DELTA_RANGE)}."
 
@@ -68,7 +70,7 @@ if __name__ == '__main__':
 
     model = PPO2(
         MlpLstmPolicy, env,
-        learning_rate=3e-3,
+        learning_rate=LEARNING_RATE,
         verbose=1,
         nminibatches=1,
         n_steps=t_num,
