@@ -29,7 +29,7 @@ if __name__ == '__main__':
     t_num = int(os.getenv("QUBIT_T_NUM"))
     N_RYD = int(os.getenv("QUBIT_N_RYD"))
     C6 = interaction_constants.get_C6(N_RYD)
-    LATTICE_SPACING = 4e-6
+    LATTICE_SPACING = 1.5e-6
     OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
     DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
 
