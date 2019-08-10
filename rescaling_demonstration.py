@@ -2,12 +2,9 @@ import numpy as np
 from matplotlib import ticker, pyplot as plt
 
 import paper_data
-
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 from qubit_system.qubit_system_classes import StaticQubitSystem, EvolvingQubitSystem
-from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interpolation
-from qubit_system.utils.states import get_ghz_state, GHZStateType
+from qubit_system.utils.ghz_states import AlternatingGHZState
 
 
 def rescale_evolving_qubit_system():
@@ -18,7 +15,7 @@ def rescale_evolving_qubit_system():
         Omega=paper_data.get_hamiltonian_coeff_fn(paper_data.Omega, N),
         Delta=paper_data.get_hamiltonian_coeff_fn(paper_data.Delta, N),
         t_list=np.linspace(0, t, 100),
-        ghz_state=get_ghz_state(N, _type=GHZStateType.ALTERNATING)
+        ghz_state=AlternatingGHZState(N)
     )
     e_qs.solve()
     # e_qs.plot()
@@ -34,7 +31,7 @@ def rescale_evolving_qubit_system():
         Delta=paper_data.get_hamiltonian_coeff_fn(
             {k: {_k * max_Omega: _v / max_Omega for _k, _v in v.items()} for k, v in paper_data.Delta.items()}, N),
         t_list=np.linspace(0, t * max_Omega, 100),
-        ghz_state=get_ghz_state(N, _type=GHZStateType.ALTERNATING)
+        ghz_state=AlternatingGHZState(N)
     )
 
     e_qs.solve()

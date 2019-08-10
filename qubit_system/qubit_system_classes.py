@@ -2,15 +2,16 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 import numpy as np
-from tqdm.auto import tqdm
 from matplotlib import ticker, pyplot as plt
-from qutip import qeye, Qobj, mesolve, Options, fidelity, tensor, expect, sesolve
+from qutip import qeye, Qobj, Options, fidelity, tensor, expect, sesolve
 from qutip.solver import Result
+from tqdm.auto import tqdm
 
 from qubit_system.geometry.base_geometry import BaseGeometry
-from qubit_system.utils.states import get_exp_list, get_ground_states, get_states, get_label_from_state, get_ghz_state, \
-    get_excited_states
+from qubit_system.utils.ghz_states import BaseGHZState
 from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interpolation
+from qubit_system.utils.states import get_exp_list, get_ground_states, get_states, get_label_from_state, \
+    get_excited_states
 
 PLOT_FOLDER = Path(__file__).parent.parent / 'plots'
 PLOT_FOLDER.mkdir(exist_ok=True)
@@ -132,7 +133,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
     def __init__(self, N: int, V: float, geometry: BaseGeometry,
                  Omega: Callable[[float], float],
                  Delta: Callable[[float], float],
-                 t_list: np.ndarray, ghz_state: Qobj, psi_0: Qobj = None):
+                 t_list: np.ndarray, ghz_state: BaseGHZState, psi_0: Qobj = None):
         super().__init__(N, V, geometry)
 
         self.Omega = Omega
@@ -176,7 +177,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
         )
 
     @plotting_decorator
-    def plot(self, with_antisymmetric_ghz: Qobj = None):
+    def plot(self, with_antisymmetric_ghz: bool = False):
         assert self.solve_result is not None, "solve_result attribute cannot be None (call solve method)"
         rows = 3
         fig, axs = plt.subplots(rows, 1, sharex='all', figsize=(15, rows * 3))
@@ -204,10 +205,11 @@ class EvolvingQubitSystem(BaseQubitSystem):
         ax.legend()
         ax.set_title("Control parameters")
 
-    def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: Optional[Qobj]):
-        labelled_states = [(self.ghz_state, r"$\psi_{\mathrm{GHZ}}^{\mathrm{s}}$")]
+    def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: bool):
+        labelled_states = [(self.ghz_state.get_state_tensor(), r"$\psi_{\mathrm{GHZ}}^{\mathrm{s}}$")]
         if with_antisymmetric_ghz is not None:
-            labelled_states.append((with_antisymmetric_ghz, r"$\psi_{\mathrm{GHZ}}^{\mathrm{a}}$"))
+            labelled_states.append(
+                (self.ghz_state.get_state_tensor(symmetric=False), r"$\psi_{\mathrm{GHZ}}^{\mathrm{a}}$"))
 
         for _state, _label in labelled_states:
             ax.plot(
@@ -229,7 +231,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         plot_individual_orthogonal_state_labels = len(states) <= 4
         plotted_others = False
-        for i, state in enumerate(states):
+        for i, state in enumerate(tqdm(states)):
             label = get_label_from_state(state)
             state_fidelities = [fidelity(tensor(state), _instantaneous_state) ** 2
                                 for _instantaneous_state in self.solve_result.states]
@@ -271,13 +273,15 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
     def get_fidelity_with(self, target_state: Union[str, Qobj] = "ghz") -> float:
         """
-        :param target_state: One of "ghz", "ground", and "excited"
+        :param target_state: One of "ghz", "ghz_antisymmetric", "ground", and "excited"
         :return:
         """
         assert (self.solve_result is not None), "solve_result attribute cannot be None (call solve method)"
         final_state = self.solve_result.states[-1]
         if target_state == "ghz":
-            return fidelity(final_state, self.ghz_state) ** 2
+            return fidelity(final_state, self.ghz_state.get_state_tensor(symmetric=True)) ** 2
+        elif target_state == "ghz_antisymmetric":
+            return fidelity(final_state, self.ghz_state.get_state_tensor(symmetric=False)) ** 2
         elif target_state == "ground":
             return fidelity(final_state, tensor(*get_ground_states(self.N))) ** 2
         elif target_state == "excited":
@@ -290,28 +294,15 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
 if __name__ == '__main__':
     from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-    from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 
-    # s_qs = StaticQubitSystem(
-    #     N=4, V=1,
-    #     geometry=RegularLattice1D(),
-    #     Omega=1, Delta=np.linspace(-1, 1, 50)
-    # )
-    # s_qs.plot()
-    #
-    # s_qs = StaticQubitSystem(
-    #     N=4, V=1,
-    #     geometry=RegularLattice2D((2, 2)),
-    #     Omega=1, Delta=np.linspace(-1, 1, 50)
-    # )
-    # s_qs.plot()
+    s_qs = StaticQubitSystem(
+        N=4, V=1,
+        geometry=RegularLattice1D(),
+        Omega=1, Delta=np.linspace(-1, 1, 50)
+    )
+    s_qs.plot()
 
-    # s_qs = StaticQubitSystem(
-    #     N=2, V=1,
-    #     geometry=RegularLattice1D(),
-    #     Omega=1, Delta=np.linspace(-1, 1, 50)
-    # )
-    # s_qs.plot()
+    from qubit_system.utils.ghz_states import StandardGHZState
 
     t = 1
     N = 4
@@ -320,18 +311,7 @@ if __name__ == '__main__':
         Omega=get_hamiltonian_coeff_linear_interpolation([0, t / 4, t * 3 / 4, t], [0, 1, 1, 0]),
         Delta=get_hamiltonian_coeff_linear_interpolation([0, t], [-1, 1]),
         t_list=np.linspace(0, 1, 100),
-        ghz_state=get_ghz_state(N)
+        ghz_state=StandardGHZState(N)
     )
     e_qs.solve()
-    e_qs.plot(get_ghz_state(N, False), show=True)
-
-    # t = 1
-    # e_qs = EvolvingQubitSystem(
-    #     N=4, V=1, geometry=RegularLattice2D((2, 2)),
-    #     Omega=get_hamiltonian_coeff_linear_interpolation([0, t / 4, t * 3 / 4, t], [0, 1, 1, 0]),
-    #     Delta=get_hamiltonian_coeff_linear_interpolation([0, t], [-1, 1]),
-    #     t_list=np.linspace(0, 1, 100),
-    #     ghz_state=get_ghz_state(4)
-    # )
-    # e_qs.solve()
-    # e_qs.plot()
+    e_qs.plot(with_antisymmetric_ghz=True, show=True)

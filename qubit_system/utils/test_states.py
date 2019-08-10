@@ -2,8 +2,7 @@ import unittest
 
 from qutip import *
 
-from .states import get_ghz_state, GHZStateType, get_states, get_ground_states, get_excited_states, \
-    is_excited
+from .states import get_states, get_ground_states, get_excited_states, is_excited
 
 
 class MyTestCase(unittest.TestCase):
@@ -39,13 +38,6 @@ class MyTestCase(unittest.TestCase):
                         found_state = True
                         break
                 self.assertTrue(found_state)
-
-    def test_get_ghz_state(self):
-        # Check symmetric standard GHZ state generation
-        N = 4
-        qutip_ghz = ghz_state(N)
-        generated_ghz_state = get_ghz_state(N, symmetric=True, _type=GHZStateType.STANDARD)
-        self.assertEqual(qutip_ghz, generated_ghz_state)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Tuple
 
 import gym
@@ -8,6 +9,7 @@ from qutip import Qobj
 
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.qubit_system_classes import EvolvingQubitSystem
+from qubit_system.utils.ghz_states import BaseGHZState
 from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interpolation
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ class EvolvingQubitEnv(gym.Env):
     reward_range = (0, 1)
 
     def __init__(self, N: int, V: float, geometry: BaseGeometry,
-                 t_list: np.ndarray, ghz_state: Qobj,
+                 t_list: np.ndarray, ghz_state: BaseGHZState,
                  Omega_range: Tuple[float, float], Delta_range: Tuple[float, float],
                  psi_0: Qobj = None, verbose: bool = False):
         self.verbose = verbose
@@ -51,7 +53,7 @@ class EvolvingQubitEnv(gym.Env):
 
         self.observation_space = gym.spaces.Discrete(self.required_steps)
 
-        self._maximum_fidelity_achieved = 0.5001
+        self._maximum_fidelity_achieved = 0.505
 
     def step(self, action: np.ndarray) -> Tuple[ObservationType, float, bool, object]:
         action = self._get_action_from_normalised_action(action)
@@ -103,8 +105,9 @@ class EvolvingQubitEnv(gym.Env):
         assert len(self.recorded_steps['Delta']) == self.required_steps
 
         evolving_qubit_system = self._create_evolving_qubit_system()
+        start_solve_time = time.time()
         evolving_qubit_system.solve()
-
+        print(f"solved in {time.time() - start_solve_time:.3f}")
         fidelity_achieved = evolving_qubit_system.get_fidelity_with("ghz")
         fidelity_with_ground = evolving_qubit_system.get_fidelity_with("ground")
         fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")

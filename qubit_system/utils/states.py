@@ -73,30 +73,6 @@ def is_excited(state: Qobj):
     return expect(sigmaz(), state) == 1
 
 
-class GHZStateType(Enum):
-    STANDARD = 0
-    ALTERNATING = 1
-
-
-def get_ghz_state(N: int, symmetric: bool = True, _type: GHZStateType = GHZStateType.STANDARD) -> Qobj:
-    if _type == GHZStateType.STANDARD:
-        ghz_1 = tensor([basis(2, 1) for _ in range(N)])
-        ghz_2 = tensor([basis(2, 0) for _ in range(N)])
-        if symmetric:
-            return (ghz_1 + ghz_2).unit()
-        else:
-            return (ghz_1 - ghz_2).unit()
-    elif _type == GHZStateType.ALTERNATING:
-        ghz_1 = tensor([basis(2, 1) if _ % 2 == 0 else basis(2, 0) for _ in range(N)])
-        ghz_2 = tensor([basis(2, 1) if _ % 2 == 1 else basis(2, 0) for _ in range(N)])
-        if symmetric:
-            return (ghz_1 + ghz_2).unit()
-        else:
-            return (ghz_1 - ghz_2).unit()
-    else:
-        raise ValueError(f"Unknown _type: {_type}. _type has to be GHZStateType.")
-
-
 def get_label_from_state(_state: List[Qobj]) -> str:
     return "".join(["e" if is_excited(spin) else "g" for spin in _state])
 

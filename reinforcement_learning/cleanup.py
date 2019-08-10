@@ -73,12 +73,12 @@ def process_log_file(env: EvolvingQubitEnv):
 
 if __name__ == '__main__':
     from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-    from qubit_system.utils.states import get_ghz_state
+    from qubit_system.utils.ghz_states import StandardGHZState
 
     N = 4
     t = 5
     env = EvolvingQubitEnv(N=N, V=1, geometry=RegularLattice1D(), t_list=np.linspace(0, t, 20),
                            Omega_range=(0, 1), Delta_range=(-1, 1),
-                           ghz_state=get_ghz_state(N))
+                           ghz_state=StandardGHZState(N))
 
     process_log_file(env)

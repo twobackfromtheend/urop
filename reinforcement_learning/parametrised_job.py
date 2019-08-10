@@ -5,13 +5,13 @@ from datetime import datetime
 import gym
 import numpy as np
 from stable_baselines import PPO2
-from stable_baselines.common.policies import MlpLstmPolicy
-from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecCheckNan
+from stable_baselines.common.policies import MlpLstmPolicy, MlpPolicy
+from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecCheckNan, VecFrameStack
 
 import interaction_constants
 from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-from qubit_system.utils.states import get_ghz_state
+from qubit_system.utils.ghz_states import StandardGHZState
 from reinforcement_learning import baselines_utils
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
 from reinforcement_learning.cleanup import process_log_file
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     def make_gym_env():
         env = EvolvingQubitEnv(N=N, V=C6, geometry=RegularLattice1D(LATTICE_SPACING), t_list=np.linspace(0, t, t_num),
                                Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
-                               ghz_state=get_ghz_state(N), verbose=ENV_VERBOSE)
+                               ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
         return env
 
 
