@@ -5,12 +5,14 @@ from datetime import datetime
 import gym
 import numpy as np
 from stable_baselines import PPO2
-from stable_baselines.common.policies import MlpLstmPolicy, MlpPolicy
-from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecCheckNan, VecFrameStack
+from stable_baselines.common.policies import MlpLstmPolicy
+from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv, VecCheckNan
 
 import interaction_constants
 from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
+from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
+from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
 from qubit_system.utils.ghz_states import StandardGHZState
 from reinforcement_learning import baselines_utils
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
@@ -33,6 +35,16 @@ if __name__ == '__main__':
     OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
     DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
 
+    geometry_envvar = eval(os.getenv("QUBIT_GEOMETRY"))
+    if geometry_envvar == 1:
+        geometry = RegularLattice1D(LATTICE_SPACING)
+    elif len(geometry_envvar) == 2:
+        geometry = RegularLattice2D(geometry_envvar, spacing=LATTICE_SPACING)
+    elif len(geometry_envvar) == 3:
+        geometry = RegularLattice3D(geometry_envvar, spacing=LATTICE_SPACING)
+    else:
+        raise ValueError('QUBIT_GEOMETRY has to be either "1", "(X, Y)", or "(X, Y, Z)"')
+
     LEARNING_RATE = float(os.getenv("POLICY_LR"))
 
     assert len(OMEGA_RANGE) == len(DELTA_RANGE) == 2, f"QUBIT_OMEGA_RANGE and QUBIT_DELTA_RANGE must be of length 2, " \
@@ -50,13 +62,14 @@ if __name__ == '__main__':
         f"\tQUBIT_N_RYD: {N_RYD}\n"
         f"\tQUBIT_OMEGA_RANGE: {OMEGA_RANGE}\n"
         f"\tQUBIT_DELTA_RANGE: {DELTA_RANGE}\n"
+        f"\tQUBIT_GEOMETRY: {geometry_envvar}\n"
     )
 
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
     def make_gym_env():
-        env = EvolvingQubitEnv(N=N, V=C6, geometry=RegularLattice1D(LATTICE_SPACING), t_list=np.linspace(0, t, t_num),
+        env = EvolvingQubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
                                Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
                                ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
         return env
