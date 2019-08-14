@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, Tuple
 
 import numpy as np
 from matplotlib import ticker, pyplot as plt
@@ -71,7 +71,8 @@ class StaticQubitSystem(BaseQubitSystem):
         )
 
     @plotting_decorator
-    def plot_detuning_energy_levels(self, plot_state_names: bool):
+    def plot_detuning_energy_levels(self, plot_state_names: bool, fig_kwargs: dict = None, plot_title: bool = True,
+                                    ylim: Tuple[float, float] = None):
         states = get_states(self.N)
 
         plot_points = len(self.Delta)
@@ -93,14 +94,21 @@ class StaticQubitSystem(BaseQubitSystem):
         omega_zero_all_energies = np.array(omega_zero_all_energies)
         omega_non_zero_all_energies = np.array(omega_non_zero_all_energies)
 
-        plt.figure(figsize=(15, 7), num="Energy Levels")
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        fig_kwargs = {**dict(figsize=(15, 7), num="Energy Levels"), **fig_kwargs}
+
+        plt.figure(**fig_kwargs)
 
         for i in reversed(range(len(states))):
             label = get_label_from_state(states[i])
             color = 'g' if 'e' not in label else 'r' if 'g' not in label else 'grey'
-            linewidth = 5 if 'e' not in label or 'g' not in label else 1
+            excited_or_ground = 'e' not in label or 'g' not in label
+            linewidth = 5 if excited_or_ground else 1
+            z_order = 2 if excited_or_ground else 1
             # color = f'C{i}'
-            plt.plot(self.Delta, omega_zero_all_energies[:, i], color=color, label=label, alpha=0.6, lw=linewidth)
+            plt.plot(self.Delta, omega_zero_all_energies[:, i], color=color, label=label, alpha=0.6, lw=linewidth,
+                     zorder=z_order)
             if not Omega_is_zero:
                 plt.plot(self.Delta, omega_non_zero_all_energies[:, i], color=f'C{i}', ls=':', alpha=0.6)
 
@@ -119,13 +127,18 @@ class StaticQubitSystem(BaseQubitSystem):
         scaled_yaxis_ticker = ticker.EngFormatter(unit="Hz")
         ax.xaxis.set_major_formatter(scaled_xaxis_ticker)
         ax.yaxis.set_major_formatter(scaled_yaxis_ticker)
+        plt.locator_params(nbins=4)
 
         # plt.title(rf"Energy spectrum with $N = {self.N}$, $V = {self.V:0.2e}$, $\Omega = {self.Omega:0.2e}$")
         _m, _s = f"{self.V:0.2e}".split('e')
-        V_text = rf"{_m:s} \times 10^{{{int(_s):d}}}"
-        plt.title(rf"Energy spectrum with $N = {self.N}$, $V = {V_text:s}$ Hz")
+        if plot_title:
+            V_text = rf"{_m:s} \times 10^{{{int(_s):d}}}"
+            plt.title(rf"Energy spectrum with $N = {self.N}$, $V = {V_text:s}$ Hz")
         plt.xlabel(r"Detuning $\Delta$")
         plt.ylabel("Eigenenergy")
+        plt.xlim((self.Delta.min(), self.Delta.max()))
+        if ylim:
+            plt.ylim(ylim)
         plt.tight_layout()
 
 
@@ -177,35 +190,52 @@ class EvolvingQubitSystem(BaseQubitSystem):
         )
 
     @plotting_decorator
-    def plot(self, with_antisymmetric_ghz: bool = False):
+    def plot(self, with_antisymmetric_ghz: bool = False, fig_kwargs: dict = None, plot_titles: bool = True,
+             plot_others_as_sum: bool = False):
         assert self.solve_result is not None, "solve_result attribute cannot be None (call solve method)"
-        rows = 3
-        fig, axs = plt.subplots(rows, 1, sharex='all', figsize=(15, rows * 3))
-        self.plot_Omega_and_Delta(axs[0])
-        self.plot_ghz_states_overlaps(axs[1], with_antisymmetric_ghz)
-        self.plot_basis_states_overlaps(axs[2])
 
-        for ax in axs:
-            ax.grid()
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        fig_kwargs = {**dict(figsize=(15, 9)), **fig_kwargs}
+
+        fig, axs = plt.subplots(3, 1, sharex='all', **fig_kwargs)
+        self.plot_Omega_and_Delta(axs[0], plot_title=plot_titles)
+        self.plot_ghz_states_overlaps(axs[1], with_antisymmetric_ghz, plot_title=plot_titles)
+        self.plot_basis_states_overlaps(axs[2], plot_title=plot_titles, plot_others_as_sum=plot_others_as_sum)
+
         plt.xlabel('Time')
         plt.tight_layout()
 
-    def plot_Omega_and_Delta(self, ax):
+        for ax in axs:
+            ax.grid()
+
+            # Move legend to the right
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    def plot_Omega_and_Delta(self, ax, plot_title: bool = True):
         """
         Plots Omega and Delta as a function of time.
         Includes overlap with GHZ state if `self.solve_result` is not None (self.solve has been called).
         :return:
         """
-        ax.xaxis.set_major_formatter(ticker.EngFormatter('s'))
+        ax.xaxis.set_major_formatter(ticker.EngFormatter('s', usetex=True))
         plt.xlabel('Time')
 
-        ax.plot(self.t_list, [self.Omega(t) for t in self.t_list], label=r"$\Omega$", lw=3)
-        ax.plot(self.t_list, [self.Delta(t) for t in self.t_list], label=r"$\Delta$", lw=3)
+        ax.plot(self.t_list, [self.Omega(t) for t in self.t_list], label=r"$\Omega{}$", lw=3, alpha=0.8)
+        ax.plot(self.t_list, [self.Delta(t) for t in self.t_list], label=r"$\Delta{}$", lw=3, alpha=0.8)
         ax.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
-        ax.legend()
-        ax.set_title("Control parameters")
+        ax.locator_params(nbins=4, axis='y')
+        ax.locator_params(nbins=5, axis='x')
 
-    def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: bool):
+        ax.legend()
+        if plot_title:
+            ax.set_title("Control parameters")
+        delta = (self.t_list.max() - self.t_list.min()) * 0.01
+        ax.set_xlim((self.t_list.min() - delta, self.t_list.max() + delta))
+
+    def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: bool, plot_title: bool = True):
         labelled_states = [(self.ghz_state.get_state_tensor(), r"$\psi_{\mathrm{GHZ}}^{\mathrm{s}}$")]
         if with_antisymmetric_ghz is not None:
             labelled_states.append(
@@ -217,16 +247,19 @@ class EvolvingQubitSystem(BaseQubitSystem):
                 [fidelity(_state, _instantaneous_state) ** 2
                  for _instantaneous_state in self.solve_result.states],
                 label=_label,
-                lw=3,
+                lw=1,
+                alpha=0.8
             )
         ax.set_ylabel("Fidelity")
-        ax.set_title("Fidelity with GHZ states")
+        if plot_title:
+            ax.set_title("Fidelity with GHZ states")
         ax.set_ylim((-0.1, 1.1))
         ax.yaxis.set_ticks([0, 0.5, 1])
         ax.legend()
 
-    def plot_basis_states_overlaps(self, ax):
-        states = get_states(self.N)
+    def plot_basis_states_overlaps(self, ax, plot_title: bool = True, plot_others_as_sum: bool = False):
+        states = get_states(self.N) if not plot_others_as_sum else [get_excited_states(self.N),
+                                                                    get_ground_states(self.N)]
         fidelities = []
 
         plot_individual_orthogonal_state_labels = len(states) <= 4
@@ -238,7 +271,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
             if 'e' not in label or 'g' not in label:
                 fidelities.append(state_fidelities)
 
-            plot_label = r"$P_{" + f"{label.upper()}" + "}$" \
+            plot_label = r"$P_{" + f"{label.upper()[0]}" + "}$" \
                 if plot_individual_orthogonal_state_labels or ('e' not in label or 'g' not in label) else 'Others'
             if plot_label == 'Others':
                 if plotted_others:
@@ -251,17 +284,25 @@ class EvolvingQubitSystem(BaseQubitSystem):
                 state_fidelities,
                 label=plot_label,
                 color='g' if 'e' not in label else 'r' if 'g' not in label else 'k',
-                linewidth=3 if 'e' not in label or 'g' not in label else 1,
+                linewidth=1 if 'e' not in label or 'g' not in label else 0.5,
                 alpha=0.5
             )
 
         fidelities_sum = np.array(fidelities).sum(axis=0)
         ax.plot(self.t_list, fidelities_sum,
-                label="$P_{EE} + P_{GG}$",
-                color='k', linestyle="--", linewidth=3, alpha=0.7)
+                label="$P_{E} + P_{G}$",
+                color='C0', linestyle=":", linewidth=1, alpha=0.7)
+
+        if plot_others_as_sum:
+            others_sum = 1 - fidelities_sum
+
+            ax.plot(self.t_list, others_sum,
+                    label=r"$\sum{\textrm{Others}}$",
+                    color='C1', linestyle=":", linewidth=1, alpha=0.7)
 
         ax.set_ylabel("Fidelity")
-        ax.set_title("Fidelity with basis states")
+        if plot_title:
+            ax.set_title("Fidelity with basis states")
         ax.set_ylim((-0.1, 1.1))
         ax.yaxis.set_ticks([0, 0.5, 1])
 
