@@ -143,6 +143,14 @@ N = int(os.getenv("N"))
 job_id = os.getenv("PBS_JOBID")
 alg = os.getenv("ALG")
 geometry_envvar = eval(os.getenv("QUBIT_GEOMETRY"))
+
+print(
+    "Parameters:\n"
+    f"\tjob_id: {job_id}\n"
+    f"\tN: {N}\n"
+    f"\tQUBIT_GEOMETRY: {geometry_envvar}\n"
+    f"\tALG: {alg}\n"
+)
 if geometry_envvar == 1:
     geometry = RegularLattice1D(LATTICE_SPACING)
     norm_geometry = RegularLattice1D()
