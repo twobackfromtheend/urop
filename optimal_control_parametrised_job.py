@@ -177,6 +177,6 @@ optim_result = get_optimised_controls(N, n_ts=15, alg=alg, norm_geometry=norm_ge
 report_stats(optim_result, N)
 with (OPTIM_RESULT_FOLDER / f"optim_result_{job_id}.pkl").open('wb') as f:
     pickle.dump(optim_result, f, protocol=pickle.HIGHEST_PROTOCOL)
-plot_optimresult(optim_result, N, norm_t, geometry, characteristic_V, savefig_name=f"optim_result_{job_id}.png")
+# plot_optimresult(optim_result, N, norm_t, geometry, characteristic_V, savefig_name=f"optim_result_{job_id}.png")
 
 trigger_event("job_progress", value1="Job ended", value2=job_id)
