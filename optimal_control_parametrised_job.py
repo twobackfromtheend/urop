@@ -84,7 +84,7 @@ def get_optimised_controls(N: int, n_ts: int, alg: str, norm_geometry: BaseGeome
         # amp_lbound=0, amp_ubound=2e9 * norm_scaling,
         gen_stats=True,
         max_wall_time=MAX_WALL_TIME,
-        # max_iter=100000,
+        max_iter=10000000,
         fid_err_targ=1e-10,
         log_level=qutip.logging_utils.WARN,
     )
