@@ -20,9 +20,11 @@ from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interp
 
 import matplotlib.pyplot as plt
 
+C6_coeff = int(os.getenv("C6_COEFF", 1))
+MAX_WALL_TIME = int(os.getenv("MAX_WALL_TIME"))
 
 N_RYD = 50
-C6 = interaction_constants.get_C6(N_RYD)
+C6 = interaction_constants.get_C6(N_RYD) * C6_coeff
 
 LATTICE_SPACING = 1.5e-6
 
@@ -31,6 +33,7 @@ characteristic_V = C6 / (LATTICE_SPACING ** 6)
 print(f"Characteristic V: {characteristic_V:.3e} Hz")
 
 t = 2e-6
+
 
 
 def solve_and_print_stats(e_qs: EvolvingQubitSystem, **kwargs):
@@ -80,7 +83,9 @@ def get_optimised_controls(N: int, n_ts: int, alg: str, norm_geometry: BaseGeome
         amp_lbound=-10, amp_ubound=10,
         # amp_lbound=0, amp_ubound=2e9 * norm_scaling,
         gen_stats=True,
-        max_wall_time=300, max_iter=100000, fid_err_targ=1e-10,
+        max_wall_time=MAX_WALL_TIME,
+        # max_iter=100000,
+        fid_err_targ=1e-10,
         log_level=qutip.logging_utils.WARN,
     )
     if alg == "GRAPE":
