@@ -8,6 +8,7 @@ import qutip.control.pulseoptim as cpo
 from qutip.control.optimresult import OptimResult
 
 import interaction_constants
+from ifttt_webhook import trigger_event
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
@@ -157,8 +158,12 @@ else:
 OPTIM_RESULT_FOLDER = Path(__file__).parent / 'optim_results'
 OPTIM_RESULT_FOLDER.mkdir(exist_ok=True)
 
+trigger_event("job_progress", value1="Job started", value2=job_id)
+
 optim_result = get_optimised_controls(N, n_ts=15, alg=alg, norm_geometry=norm_geometry)
 report_stats(optim_result, N)
 with (OPTIM_RESULT_FOLDER / f"optim_result_{job_id}.pkl").open('wb') as f:
     pickle.dump(optim_result, f, protocol=pickle.HIGHEST_PROTOCOL)
 plot_optimresult(optim_result, N, norm_t, geometry, characteristic_V, savefig_name=f"optim_result_{job_id}.png")
+
+trigger_event("job_progress", value1="Job ended", value2=job_id)
