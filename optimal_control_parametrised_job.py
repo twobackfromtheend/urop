@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 
 C6_coeff = int(os.getenv("C6_COEFF", 1))
 MAX_WALL_TIME = int(os.getenv("MAX_WALL_TIME"))
+AMP_BOUNDS = eval(os.getenv("AMP_BOUNDS"))
 
 N_RYD = 50
 C6 = interaction_constants.get_C6(N_RYD) * C6_coeff
@@ -80,7 +81,7 @@ def get_optimised_controls(N: int, n_ts: int, alg: str, norm_geometry: BaseGeome
     norm_scaling = 0.5 / characteristic_V
 
     optim_shared_kwargs = dict(
-        amp_lbound=-10, amp_ubound=10,
+        amp_lbound=AMP_BOUNDS[0], amp_ubound=AMP_BOUNDS[1],
         # amp_lbound=0, amp_ubound=2e9 * norm_scaling,
         gen_stats=True,
         max_wall_time=MAX_WALL_TIME,
@@ -155,6 +156,8 @@ print(
     f"\tN: {N}\n"
     f"\tQUBIT_GEOMETRY: {geometry_envvar}\n"
     f"\tALG: {alg}\n"
+    f"\tAMP_BOUNDS: {AMP_BOUNDS}\n"
+    f"\tMAX_WALL_TIME: {MAX_WALL_TIME}\n"
 )
 if geometry_envvar == 1:
     geometry = RegularLattice1D(LATTICE_SPACING)
