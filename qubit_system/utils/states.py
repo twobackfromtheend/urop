@@ -1,7 +1,7 @@
-from enum import Enum
-from typing import List
-from qutip import *
 from itertools import combinations
+from typing import List
+
+from qutip import *
 
 
 def get_exp_list(N: int):
@@ -76,6 +76,13 @@ def is_excited(state: Qobj):
 def get_label_from_state(_state: List[Qobj]) -> str:
     return "".join(["e" if is_excited(spin) else "g" for spin in _state])
 
+
+def get_product_basis_states_index(state: List[Qobj]) -> int:
+    return tensor(state).data.toarray().argmax()
+
+
+__all__ = ['get_exp_list', 'get_ground_states', 'get_excited_states', 'get_states', 'is_excited',
+           'get_label_from_state', 'get_product_basis_states_index']
 
 if __name__ == '__main__':
     for state in get_states(3):

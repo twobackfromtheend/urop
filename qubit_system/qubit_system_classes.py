@@ -3,7 +3,7 @@ from typing import Callable, Optional, Union, Tuple
 
 import numpy as np
 from matplotlib import ticker, pyplot as plt
-from qutip import qeye, Qobj, Options, fidelity, tensor, expect, sesolve
+from qutip import qeye, Qobj, Options, fidelity, tensor, expect, sesolve, mcsolve, essolve
 from qutip.solver import Result
 from tqdm.auto import tqdm
 
@@ -11,7 +11,7 @@ from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.utils.ghz_states import BaseGHZState
 from qubit_system.utils.interpolation import get_hamiltonian_coeff_linear_interpolation
 from qubit_system.utils.states import get_exp_list, get_ground_states, get_states, get_label_from_state, \
-    get_excited_states
+    get_excited_states, get_product_basis_states_index
 
 PLOT_FOLDER = Path(__file__).parent.parent / 'plots'
 PLOT_FOLDER.mkdir(exist_ok=True)
@@ -186,7 +186,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
             self.psi_0,
             self.t_list,
             e_ops=get_exp_list(self.N)[2],
-            options=Options(store_states=True, nsteps=100000)
+            options=Options(store_states=True, nsteps=100000),
+            # ntraj=2
         )
 
     @plotting_decorator
@@ -220,7 +221,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
         Includes overlap with GHZ state if `self.solve_result` is not None (self.solve has been called).
         :return:
         """
-        ax.xaxis.set_major_formatter(ticker.EngFormatter('s', usetex=True))
+        ax.xaxis.set_major_formatter(ticker.EngFormatter('s'))
         plt.xlabel('Time')
 
         ax.plot(self.t_list, [self.Omega(t) for t in self.t_list], label=r"$\Omega{}$", lw=3, alpha=0.8)
@@ -266,8 +267,12 @@ class EvolvingQubitSystem(BaseQubitSystem):
         plotted_others = False
         for i, state in enumerate(tqdm(states)):
             label = get_label_from_state(state)
-            state_fidelities = [fidelity(tensor(state), _instantaneous_state) ** 2
+            state_product_basis_index = get_product_basis_states_index(state)
+            # state_fidelities = [fidelity(tensor(state), _instantaneous_state) ** 2
+            #                     for _instantaneous_state in self.solve_result.states]
+            state_fidelities = [np.abs(_instantaneous_state.data.toarray().flatten()[state_product_basis_index]) ** 2
                                 for _instantaneous_state in self.solve_result.states]
+
             if 'e' not in label or 'g' not in label:
                 fidelities.append(state_fidelities)
 
