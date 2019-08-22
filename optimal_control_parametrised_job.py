@@ -125,24 +125,6 @@ def report_stats(result: OptimResult, N: int):
     print(f"Terminated due to {result.termination_reason}")
 
 
-def plot_optimresult(result: OptimResult, N: int, t: float, geometry: BaseGeometry, unnormalise_V: float, **kwargs):
-        time = result.time
-        final_Omega = np.hstack((result.final_amps[:, 0], result.final_amps[-1, 0]))
-        final_Delta = np.hstack((result.final_amps[:, 1], result.final_amps[-1, 1]))
-
-        t /= unnormalise_V
-        time = result.time / unnormalise_V
-        final_Omega *= unnormalise_V
-        final_Delta *= unnormalise_V
-
-        e_qs = EvolvingQubitSystem(
-            N=N, V=C6, geometry=geometry,
-            Omega=get_hamiltonian_coeff_interpolation(time, final_Omega, "previous"),
-            Delta=get_hamiltonian_coeff_interpolation(time, final_Delta, "previous"),
-            t_list=np.linspace(0, t, 300),
-            ghz_state=StandardGHZState(N)
-        )
-        solve_and_print_stats(e_qs, **kwargs)
 
 
 N = int(os.getenv("N"))
