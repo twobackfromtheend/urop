@@ -16,6 +16,7 @@ from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
 from qubit_system.utils.ghz_states import StandardGHZState
 from reinforcement_learning import baselines_utils
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
+from reinforcement_learning.Environments.ti_evolving_qubit_env import TIEvolvingQubitEnv
 from reinforcement_learning.cleanup import process_log_file
 
 gym.logger.setLevel(gym.logger.INFO)
@@ -68,10 +69,11 @@ if __name__ == '__main__':
     trigger_event("job_progress", value1="Job started", value2=job_id)
     start_time = time.time()
 
+
     def make_gym_env():
-        env = EvolvingQubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
-                               Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
-                               ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
+        env = TIEvolvingQubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
+                                 Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
+                                 ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
         return env
 
 
