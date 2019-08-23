@@ -1,14 +1,15 @@
 import logging
 import time
-from typing import Tuple
+from typing import Tuple, Optional
 
 import gym
 import numpy as np
-from qutip import Qobj
+from qutip import Qobj, tensor
 
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.qubit_system_classes import TimeIndependentEvolvingQubitSystem
 from qubit_system.utils.ghz_states import BaseGHZState
+from qubit_system.utils.states import get_ground_states
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class TIEvolvingQubitEnv(gym.Env):
     def __init__(self, N: int, V: float, geometry: BaseGeometry,
                  t_list: np.ndarray, ghz_state: BaseGHZState,
                  Omega_range: Tuple[float, float], Delta_range: Tuple[float, float],
-                 psi_0: Qobj = None, verbose: bool = False):
+                 verbose: bool = False):
         self.verbose = verbose
 
         self.ti_evolving_qubit_system_kwargs = {
@@ -35,7 +36,7 @@ class TIEvolvingQubitEnv(gym.Env):
             'ghz_state': ghz_state,
             't_list': np.linspace(0, t_list[1], 10)
         }
-        self.psi_0 = psi_0
+        self.psi_0 = tensor(get_ground_states(N))
         self.t_list = t_list
 
         self.required_steps = len(t_list)
@@ -46,7 +47,7 @@ class TIEvolvingQubitEnv(gym.Env):
             'Delta': [],
         }
         self.step_number = 0
-        self.latest_evolving_qubit_system: TimeIndependentEvolvingQubitSystem = None
+        self.latest_evolving_qubit_system: Optional[TimeIndependentEvolvingQubitSystem] = None
         self.total_solve_time = 0
 
         self.action_normalisation = Omega_range, Delta_range
@@ -108,9 +109,12 @@ class TIEvolvingQubitEnv(gym.Env):
     def _get_observation(self) -> ObservationType:
         return self.step_number
 
-    def _update_latest_evolving_qubit_system_with_action(self, Omega: float, Delta: float):
-        latest_state = self.psi_0 if self.latest_evolving_qubit_system is None \
+    def _get_latest_state(self) -> Qobj:
+        return self.psi_0 if self.latest_evolving_qubit_system is None \
             else self.latest_evolving_qubit_system.solve_result.states[-1]
+
+    def _update_latest_evolving_qubit_system_with_action(self, Omega: float, Delta: float):
+        latest_state = self._get_latest_state()
         evolving_qubit_system = TimeIndependentEvolvingQubitSystem(
             **self.ti_evolving_qubit_system_kwargs,
             psi_0=latest_state,

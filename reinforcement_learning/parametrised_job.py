@@ -17,6 +17,7 @@ from qubit_system.utils.ghz_states import StandardGHZState
 from reinforcement_learning import baselines_utils
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
 from reinforcement_learning.Environments.ti_evolving_qubit_env import TIEvolvingQubitEnv
+from reinforcement_learning.Environments.ti_evolving_qubit_env_2 import TIEvolvingQubitEnv2
 from reinforcement_learning.cleanup import process_log_file
 
 gym.logger.setLevel(gym.logger.INFO)
@@ -35,6 +36,13 @@ if __name__ == '__main__':
     LATTICE_SPACING = 1.5e-6
     OMEGA_RANGE = eval(os.getenv("QUBIT_OMEGA_RANGE"))
     DELTA_RANGE = eval(os.getenv("QUBIT_DELTA_RANGE"))
+
+    qubit_env_dict = {
+        'EQE': EvolvingQubitEnv,
+        'TI': TIEvolvingQubitEnv,
+        'TI2': TIEvolvingQubitEnv2
+    }
+    QubitEnv = qubit_env_dict[os.getenv("QUBIT_ENV")]
 
     geometry_envvar = eval(os.getenv("QUBIT_GEOMETRY"))
     if geometry_envvar == 1:
@@ -57,6 +65,7 @@ if __name__ == '__main__':
         f"\tn_envs: {n_envs}\n"
         f"\tEnvType: {EnvType.__name__}\n"
         f"\tENV_VERBOSE: {ENV_VERBOSE}\n"
+        f"\tQubitEnv: {QubitEnv}\n"
         f"\tQUBIT_N: {N}\n"
         f"\tQUBIT_T: {t}\n"
         f"\tQUBIT_T_NUM: {t_num}\n"
@@ -71,9 +80,9 @@ if __name__ == '__main__':
 
 
     def make_gym_env():
-        env = TIEvolvingQubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
-                                 Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
-                                 ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
+        env = QubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
+                       Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
+                       ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
         return env
 
 

@@ -185,7 +185,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
             self.get_hamiltonian(),
             self.psi_0,
             self.t_list,
-            e_ops=get_exp_list(self.N)[2],
+            # e_ops=get_exp_list(self.N)[2],
             options=Options(store_states=True, nsteps=100000),
             # ntraj=2
         )
