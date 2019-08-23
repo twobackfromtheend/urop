@@ -338,6 +338,35 @@ class EvolvingQubitSystem(BaseQubitSystem):
             raise ValueError(f"target_state has to be one of 'ghz', 'ground', or 'excited', not {target_state}.")
 
 
+class TimeIndependentEvolvingQubitSystem(EvolvingQubitSystem):
+
+    def __init__(self, N: int, V: float, geometry: BaseGeometry, Omega: float,
+                 Delta: float, t_list: np.ndarray, ghz_state: BaseGHZState, psi_0: Qobj = None):
+        Omega_func = lambda x: Omega
+        Delta_func = lambda x: Delta
+
+        super().__init__(N, V, geometry, Omega=Omega_func, Delta=Delta_func, t_list=t_list, ghz_state=ghz_state,
+                         psi_0=psi_0)
+
+        self._Omega = Omega
+        self._Delta = Delta
+
+    def get_hamiltonian(self) -> Qobj:
+        sx_list, sy_list, sz_list = get_exp_list(self.N)
+        H: Qobj = 0
+
+        for i in range(self.N):
+            H += self._Omega / 2 * sx_list[i]
+            n_i = (sz_list[i] + qeye(1)) / 2
+            H -= self._Delta * n_i
+
+            for j in range(i):
+                n_j = (sz_list[j] + qeye(1)) / 2
+
+                H += self.V / self.geometry.get_distance(i, j) ** 6 * n_i * n_j
+        return H
+
+
 if __name__ == '__main__':
     from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 
