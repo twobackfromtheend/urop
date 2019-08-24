@@ -29,4 +29,4 @@ class TIEvolvingQubitEnv2(TIEvolvingQubitEnv):
         P_ee = latest_state_data[0]
         P_gg = latest_state_data[-1]
 
-        return np.array([P_ee, P_gg])
+        return np.absolute(np.array([P_ee, P_gg]))
