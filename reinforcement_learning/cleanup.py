@@ -5,11 +5,12 @@ from collections import deque
 from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 import numpy as np
 
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
+from reinforcement_learning.Environments.ti_evolving_qubit_env import TIEvolvingQubitEnv
 
 log_file_env = os.getenv('LOG_FILE')
 LOG_FILE = Path(log_file_env) if log_file_env is not None else Path(__file__).parent / "logs" / "s_baselines.log"
@@ -22,7 +23,7 @@ class Protocol(NamedTuple):
     Delta: np.ndarray
 
 
-def process_log_file(env: EvolvingQubitEnv):
+def process_log_file(env: Union[EvolvingQubitEnv, TIEvolvingQubitEnv]):
     protocols = []
     with LOG_FILE.open('r') as f:
         previous_lines = deque(maxlen=10)
@@ -56,10 +57,13 @@ def process_log_file(env: EvolvingQubitEnv):
         if _protocol.fidelity == best_protocol and _protocol is not best_protocol:
             print(f"Found another protocol with equal fidelity: {_protocol}")
 
-    data = {
-        'evolving_qubit_system_kwargs': env.evolving_qubit_system_kwargs,
-        'protocol': best_protocol,
-    }
+    data = {'protocol': best_protocol}
+    if isinstance(env, EvolvingQubitEnv):
+        data['evolving_qubit_system_kwargs'] = env.evolving_qubit_system_kwargs
+    elif isinstance(env, TIEvolvingQubitEnv):
+        data['ti_evolving_qubit_system_kwargs'] = env.ti_evolving_qubit_system_kwargs
+    else:
+        print(f"Unknown env type: {env.__class__.__name__}")
 
     current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
     data_filepath = RESULTS_FOLDER / (current_datetime + ".pkl")
