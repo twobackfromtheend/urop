@@ -108,7 +108,10 @@ class EvolvingQubitEnv(gym.Env):
         start_solve_time = time.time()
         evolving_qubit_system.solve()
         print(f"solved in {time.time() - start_solve_time:.3f}")
-        fidelity_achieved = evolving_qubit_system.get_fidelity_with("ghz")
+        fidelity_achieved = max(
+            evolving_qubit_system.get_fidelity_with("ghz"),
+            evolving_qubit_system.get_fidelity_with("ghz_antisymmetric")
+        )
         fidelity_with_ground = evolving_qubit_system.get_fidelity_with("ground")
         fidelity_with_excited = evolving_qubit_system.get_fidelity_with("excited")
 

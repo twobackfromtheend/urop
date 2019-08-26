@@ -130,7 +130,10 @@ class TIEvolvingQubitEnv(gym.Env):
         assert len(self.recorded_steps['Omega']) == self.required_steps
         assert len(self.recorded_steps['Delta']) == self.required_steps
 
-        fidelity_achieved = self.latest_evolving_qubit_system.get_fidelity_with("ghz")
+        fidelity_achieved = max(
+            self.latest_evolving_qubit_system.get_fidelity_with("ghz"),
+            self.latest_evolving_qubit_system.get_fidelity_with("ghz_antisymmetric")
+        )
         fidelity_with_ground = self.latest_evolving_qubit_system.get_fidelity_with("ground")
         fidelity_with_excited = self.latest_evolving_qubit_system.get_fidelity_with("excited")
 
