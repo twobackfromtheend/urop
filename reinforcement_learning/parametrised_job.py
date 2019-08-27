@@ -68,6 +68,7 @@ if __name__ == '__main__':
         f"\tn_envs: {n_envs}\n"
         f"\tEnvType: {EnvType.__name__}\n"
         f"\tENV_VERBOSE: {ENV_VERBOSE}\n"
+        f"\tLOAD_TRAINED_MODEL: {load_trained_model}\n"
         f"\tQubitEnv: {QubitEnv}\n"
         f"\tQUBIT_N: {N}\n"
         f"\tQUBIT_T: {t}\n"
@@ -105,8 +106,12 @@ if __name__ == '__main__':
     )
 
     if load_trained_model:
-        trained_model_path = Path(__file__).parent / "trained_model.pkl"
-        model.load(str(trained_model_path))
+        trained_model_path: Path = Path(__file__).parent / "trained_model.pkl"
+        if trained_model_path.is_file():
+            model.load(str(trained_model_path))
+            print(f"Loaded trained model: {trained_model_path}")
+        else:
+            print(f"Trained model not found: {trained_model_path}")
 
     baselines_utils.evaluate(model, env, episodes=20)
 
