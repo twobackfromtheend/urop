@@ -65,10 +65,10 @@ class EvolvingQubitEnv(gym.Env):
 
         observation = self._get_observation()
 
-        done = self.step_number == self.required_steps
+        done = self.step_number == self.required_steps  # step_number starts from 0
         # done if next action not needed.
-        # E.g. t_list = [0, 1, 2]. required_steps = 2. done when observation is step = 2.
-        # (actions taken for step = 0 and step = 1)
+        # E.g. t_list = np.linspace(0, 2, 3) = [0, 1, 2]. required_steps = 3. done when observation is step = 3.
+        # (actions taken for step = 0, step = 1, and step = 2)
 
         reward = 0 if not done else self._get_ghz_state_fidelity()
 

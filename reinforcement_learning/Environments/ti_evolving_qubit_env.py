@@ -20,6 +20,8 @@ class TIEvolvingQubitEnv(gym.Env):
     """
     Uses step functions for Omega and Delta
     (Named as such because it uses the time-independent TimeIndependentEvolvingQubitSystem)
+
+    N.B. For a t_list of length A, this environment will generate only A-1 actions (interpolate using "previous")
     """
     reward_range = (0, 1)
 
@@ -39,8 +41,8 @@ class TIEvolvingQubitEnv(gym.Env):
         self.psi_0 = tensor(get_ground_states(N))
         self.t_list = t_list
 
-        self.required_steps = len(t_list)
-        # Actions for all ts needed, Omega forced to 0 at start and end.
+        self.required_steps = len(t_list) - 1
+        # Actions for all ts except the end.
 
         self.recorded_steps = {
             'Omega': [],
