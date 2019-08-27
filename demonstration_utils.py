@@ -44,9 +44,11 @@ def get_normalised_hamiltonian(N: int, norm_V: float):
     return norm_H_d, norm_H_c, norm_e_qs.psi_0
 
 
-def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, alg="GRAPE") -> OptimResult:
+def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, target_state_symmetric: bool = True,
+                           optim_kwargs: dict = None,
+                           alg="GRAPE") -> OptimResult:
     norm_H_d, norm_H_c, psi_0 = get_normalised_hamiltonian(N, norm_V)
-    target_state = StandardGHZState(N).get_state_tensor()
+    target_state = StandardGHZState(N).get_state_tensor(target_state_symmetric)
 
     optim_shared_kwargs = dict(
         amp_lbound=0, amp_ubound=3,
@@ -55,6 +57,15 @@ def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, alg=
         max_wall_time=300, max_iter=10000, fid_err_targ=1e-10,
         log_level=qutip.logging_utils.WARN,
     )
+
+    optim_kwargs_ = {**optim_shared_kwargs}
+
+    if alg == "GRAPE":
+        optim_kwargs_['init_pulse_type'] = "RND"
+    else:
+        optim_kwargs_['guess_pulse_type']="RND"
+
+    optim_kwargs_ = {**optim_kwargs_, **optim_kwargs}
     if alg == "GRAPE":
         norm_result = cpo.optimize_pulse_unitary(
             norm_H_d, norm_H_c,
@@ -63,8 +74,7 @@ def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, alg=
             # pulse_scaling=1e9 * norm_scaling, pulse_offset=1e9 * norm_scaling,
             # pulse_scaling=0.5,
             # optim_method="FMIN_BFGS",
-            init_pulse_type="RND",
-            **optim_shared_kwargs
+            **optim_kwargs_
         )
     else:
         norm_result = cpo.opt_pulse_crab_unitary(
@@ -74,21 +84,20 @@ def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, alg=
             # num_coeffs=10,
             # guess_pulse_scaling=0.1,
             # guess_pulse_scaling=1e9 * norm_scaling, guess_pulse_offset=1e9 * norm_scaling,
-            guess_pulse_type="RND",
-            **optim_shared_kwargs
+            **optim_kwargs_
         )
     return norm_result
 
 
-def report_stats(result: OptimResult, N: int):
+def report_stats(result: OptimResult, N: int, target_state_symmetric: bool = True):
     result.stats.report()
-    target_state = StandardGHZState(N).get_state_tensor()
+    target_state = StandardGHZState(N).get_state_tensor(target_state_symmetric)
 
     final_fidelity = qutip.fidelity(target_state, result.evo_full_final) ** 2
-    print(f"final_fidelity: {final_fidelity:.5f}")
+    print(f"Final fidelity: {final_fidelity:.5f}")
 
-    print(f"Final gradient normal {result.grad_norm_final:.3e}")
-    print(f"Terminated due to {result.termination_reason}")
+    print(f"Final gradient normal: {result.grad_norm_final:.3e}")
+    print(f"Terminated due to: {result.termination_reason}")
 
 
 def plot_optimresult(result: OptimResult, N: int, t: float, C6: float, characteristic_V: float, geometry: BaseGeometry):
