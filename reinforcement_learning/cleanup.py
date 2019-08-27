@@ -62,6 +62,7 @@ def process_log_file(env: Union[EvolvingQubitEnv, TIEvolvingQubitEnv]):
         data['evolving_qubit_system_kwargs'] = env.evolving_qubit_system_kwargs
     elif isinstance(env, TIEvolvingQubitEnv):
         data['ti_evolving_qubit_system_kwargs'] = env.ti_evolving_qubit_system_kwargs
+        data['ti_evolving_qubit_system_kwargs']['t_list'] = env.t_list
     else:
         print(f"Unknown env type: {env.__class__.__name__}")
 
