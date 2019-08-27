@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 import gym
 import numpy as np
@@ -27,6 +28,8 @@ if __name__ == '__main__':
     n_envs = int(os.getenv('ENV_N'))
     EnvType = SubprocVecEnv if bool(eval(os.getenv('ENV_USE_SUBPROC', "False"))) else DummyVecEnv
     ENV_VERBOSE = bool(eval(os.getenv("ENV_VERBOSE")))
+
+    load_trained_model = bool(eval(os.getenv("LOAD_TRAINED_MODEL", "False")))
 
     N = int(os.getenv("QUBIT_N"))
     t = float(os.getenv("QUBIT_T"))
@@ -100,6 +103,10 @@ if __name__ == '__main__':
         n_steps=t_num,
         tensorboard_log='./tensorboard_logs'
     )
+
+    if load_trained_model:
+        trained_model_path = Path(__file__).parent / "trained_model.pkl"
+        model.load(str(trained_model_path))
 
     baselines_utils.evaluate(model, env, episodes=20)
 
