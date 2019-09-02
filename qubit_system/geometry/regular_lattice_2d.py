@@ -35,6 +35,9 @@ class RegularLattice2D(BaseGeometry):
         plt.grid()
         plt.tight_layout()
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.spacing))
+
 
 if __name__ == '__main__':
     lattice = RegularLattice2D(shape=(3, 3), spacing=0.5)

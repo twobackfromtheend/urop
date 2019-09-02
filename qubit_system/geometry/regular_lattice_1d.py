@@ -29,6 +29,9 @@ class RegularLattice1D(BaseGeometry):
         plt.grid()
         plt.tight_layout()
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.spacing))
+
 
 if __name__ == '__main__':
     lattice = RegularLattice1D(spacing=0.5)

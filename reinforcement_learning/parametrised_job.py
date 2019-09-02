@@ -14,11 +14,13 @@ from ifttt_webhook import trigger_event
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
+from qubit_system.utils.ghz_states_quimb import StandardGHZState as StandardGHZStateQ
 from qubit_system.utils.ghz_states import StandardGHZState
 from reinforcement_learning import baselines_utils
 from reinforcement_learning.Environments.evolving_qubit_env import EvolvingQubitEnv
 from reinforcement_learning.Environments.ti_evolving_qubit_env import TIEvolvingQubitEnv
 from reinforcement_learning.Environments.ti_evolving_qubit_env_2 import TIEvolvingQubitEnv2
+from reinforcement_learning.Environments.ti_evolving_qubit_env_quimb import TIEvolvingQubitEnvQ
 from reinforcement_learning.cleanup import process_log_file
 
 gym.logger.setLevel(gym.logger.INFO)
@@ -43,7 +45,8 @@ if __name__ == '__main__':
     qubit_env_dict = {
         'EQE': EvolvingQubitEnv,
         'TI': TIEvolvingQubitEnv,
-        'TI2': TIEvolvingQubitEnv2
+        'TI2': TIEvolvingQubitEnv2,
+        'TIQ': TIEvolvingQubitEnvQ
     }
     QubitEnv = qubit_env_dict[os.getenv("QUBIT_ENV")]
 
@@ -84,9 +87,13 @@ if __name__ == '__main__':
 
 
     def make_gym_env():
+        if issubclass(QubitEnv, TIEvolvingQubitEnvQ):
+            ghz_state = StandardGHZStateQ(N)
+        else:
+            ghz_state = StandardGHZState(N)
         env = QubitEnv(N=N, V=C6, geometry=geometry, t_list=np.linspace(0, t, t_num),
                        Omega_range=OMEGA_RANGE, Delta_range=DELTA_RANGE,
-                       ghz_state=StandardGHZState(N), verbose=ENV_VERBOSE)
+                       ghz_state=ghz_state, verbose=ENV_VERBOSE)
         return env
 
 
@@ -102,7 +109,8 @@ if __name__ == '__main__':
         verbose=1,
         nminibatches=1,
         n_steps=t_num,
-        tensorboard_log='./tensorboard_logs'
+        tensorboard_log='./tensorboard_logs',
+        # ent_coef=0.05
     )
 
     if load_trained_model:
