@@ -8,8 +8,10 @@ from qutip import Qobj
 
 import interaction_constants
 from demonstration_utils import solve_and_print_stats, get_normalised_hamiltonian
+from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
+from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
 from qubit_system.qubit_system_classes import EvolvingQubitSystem
 
 from qubit_system.utils.ghz_states import StandardGHZState, AlternatingGHZState
@@ -55,14 +57,29 @@ t = 2e-6
 import qutip.control.pulseoptim as cpo
 import qutip.logging_utils
 
-norm_V = C6 / (LATTICE_SPACING ** 6) / characteristic_V
-norm_H_d, norm_H_c, psi_0 = get_normalised_hamiltonian(N, norm_V)
-n_ts = 50
 
+def get_normalised_hamiltonian(N: int, norm_V: float, geometry: BaseGeometry):
+    norm_e_qs = EvolvingQubitSystem(
+        N=N, V=norm_V, geometry=geometry,
+        Omega=None, Delta=None,
+        t_list=None,
+        ghz_state=None
+    )
+    norm_hamiltonian = norm_e_qs.get_hamiltonian()
+
+    norm_H_d = norm_hamiltonian[0]  # "drift": time-independent part
+    norm_H_c = [norm_hamiltonian[1][0], norm_hamiltonian[2][0]]  # "control": time-dependent parts
+    return norm_H_d, norm_H_c, norm_e_qs.psi_0
+
+
+n_ts = 50
 norm_t = t * characteristic_V
 
 
-def optimise_and_evaluate_fidelity(target_state_: Qobj):
+def optimise_and_evaluate_fidelity(target_state_: Qobj, geometry: BaseGeometry):
+    norm_V = C6 / (LATTICE_SPACING ** 6) / characteristic_V
+    norm_H_d, norm_H_c, psi_0 = get_normalised_hamiltonian(N, norm_V, geometry)
+
     result = cpo.optimize_pulse_unitary(
         norm_H_d, norm_H_c,
         psi_0, target_state_,
@@ -87,8 +104,16 @@ def optimise_and_evaluate_fidelity(target_state_: Qobj):
     return final_fidelity
 
 
-optimise_and_evaluate_fidelity(StandardGHZState(N).get_state_tensor(True))
-optimise_and_evaluate_fidelity(AlternatingGHZState(N).get_state_tensor(True))
+for target_state in [
+    StandardGHZState(N).get_state_tensor(True),
+    AlternatingGHZState(N).get_state_tensor(True),
+]:
+    for geometry in [
+        RegularLattice1D(),
+        RegularLattice2D((2, 4)),
+        RegularLattice3D((2, 2, 2)),
+    ]:
+        optimise_and_evaluate_fidelity(target_state, geometry)
 
 
 
