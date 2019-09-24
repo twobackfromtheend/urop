@@ -39,26 +39,44 @@ class BaseQubitSystem:
         self.V = V
 
         self.geometry = geometry
+        self._hamiltonian_variables = None
 
     def _get_hamiltonian(self, Omega: float, Delta: float) -> q.qarray:
+        if self._hamiltonian_variables is None:
+            self._hamiltonian_variables = self._get_hamiltonian_variables()
+
+        return self._hamiltonian_variables[0] \
+               + Omega * self._hamiltonian_variables[1] \
+               + Delta * self._hamiltonian_variables[2]
+
+    def _get_hamiltonian_variables(self) -> Tuple[q.qarray, q.qarray, q.qarray]:
         sx = q.pauli("X", sparse=True)
         sz = q.pauli("Z", sparse=True)
         qnum = (sz + q.identity(2, sparse=True)) / 2
         dims = [2] * self.N
 
         # noinspection PyTypeChecker
-        H: q.qarray = 0
+        time_independent_terms: q.qarray = 0
+        # noinspection PyTypeChecker
+        Omega_coeff_terms: q.qarray = 0
+        # noinspection PyTypeChecker
+        Delta_coeff_terms: q.qarray = 0
 
         for i in range(self.N):
-            H += Omega / 2 * q.ikron(sx, dims=dims, inds=i, sparse=True)
+            Omega_coeff_terms += q.ikron(sx, dims=dims, inds=i, sparse=True) / 2
             n_i = q.ikron(qnum, dims=dims, inds=i, sparse=True)
-            H -= Delta * n_i
+            Delta_coeff_terms -= n_i
 
             for j in range(i):
                 n_j = q.ikron(qnum, dims=dims, inds=j, sparse=True)
 
-                H += self.V / self.geometry.get_distance(i, j) ** 6 * n_i * n_j
-        return H
+                time_independent_terms += self.V / self.geometry.get_distance(i, j) ** 6 * n_i * n_j
+
+        return (
+            time_independent_terms,
+            Omega_coeff_terms,
+            Delta_coeff_terms
+        )
 
 
 class StaticQubitSystem(BaseQubitSystem):
@@ -68,8 +86,31 @@ class StaticQubitSystem(BaseQubitSystem):
         self.Omega = Omega
         self.Delta = Delta
 
+        self.states = states_quimb.get_states(self.N)
+        self.Omega_zero_energies = None
+        self.Omega_non_zero_energies = None
+
     def get_hamiltonian(self, detuning: float) -> q.qarray:
         return self._get_hamiltonian(self.Omega, detuning)
+
+    def get_energies(self):
+        omega_zero_all_energies = []
+        omega_non_zero_all_energies = []
+
+        state_tensors = [q.kron(*state) for state in self.states]
+        for detuning in tqdm(self.Delta):
+            H = self.get_hamiltonian(detuning)
+            energies = []
+
+            for i, state in enumerate(self.states):
+                energy = q.expec(H, state_tensors[i]).real
+                energies.append(energy)
+            omega_zero_all_energies.append(energies)
+            if self.Omega != 0:
+                eigenvalues = q.eigvalsh(H.toarray()).real
+                omega_non_zero_all_energies.append(eigenvalues)
+        self.Omega_zero_energies = np.array(omega_zero_all_energies)
+        self.Omega_non_zero_energies = np.array(omega_non_zero_all_energies)
 
     def plot(self):
         self.plot_detuning_energy_levels(
@@ -81,29 +122,11 @@ class StaticQubitSystem(BaseQubitSystem):
     @plotting_decorator
     def plot_detuning_energy_levels(self, plot_state_names: bool, fig_kwargs: dict = None, plot_title: bool = True,
                                     ylim: Tuple[float, float] = None, highlight_states_by_label: List[str] = None):
+        if self.Omega_zero_energies is None:
+            self.get_energies()
+
         if highlight_states_by_label is None:
             highlight_states_by_label = ''.join(['e' for _ in range(self.N)])
-
-        states = states_quimb.get_states(self.N)
-
-        plot_points = len(self.Delta)
-        Omega_is_zero = self.Omega == 0
-
-        omega_zero_all_energies = []
-        omega_non_zero_all_energies = []
-        for detuning in tqdm(self.Delta):
-            H = self.get_hamiltonian(detuning)
-            energies = []
-
-            for state in states:
-                energy = q.expec(H, q.kron(*state)).real
-                energies.append(energy)
-            omega_zero_all_energies.append(energies)
-            if not Omega_is_zero:
-                eigenvalues = q.eigvals(H).real
-                omega_non_zero_all_energies.append(eigenvalues)
-        omega_zero_all_energies = np.array(omega_zero_all_energies)
-        omega_non_zero_all_energies = np.array(omega_non_zero_all_energies)
 
         if fig_kwargs is None:
             fig_kwargs = {}
@@ -111,23 +134,24 @@ class StaticQubitSystem(BaseQubitSystem):
 
         plt.figure(**fig_kwargs)
 
-        for i in reversed(range(len(states))):
-            label = states_quimb.get_label_from_state(states[i])
+        plot_points = len(self.Delta)
+        for i in reversed(range(len(self.states))):
+            label = states_quimb.get_label_from_state(self.states[i])
             is_highlight_state = label in highlight_states_by_label
             is_ground_state = 'e' not in label
             color = 'g' if is_ground_state else 'r' if is_highlight_state else 'grey'
             linewidth = 5 if is_ground_state or is_highlight_state else 1
             z_order = 2 if is_ground_state or is_highlight_state else 1
             # color = f'C{i}'
-            plt.plot(self.Delta, omega_zero_all_energies[:, i], color=color, label=label, alpha=0.6, lw=linewidth,
+            plt.plot(self.Delta, self.Omega_zero_energies[:, i], color=color, label=label, alpha=0.6, lw=linewidth,
                      zorder=z_order)
-            if not Omega_is_zero:
-                plt.plot(self.Delta, omega_non_zero_all_energies[:, i], color=f'C{i}', ls=':', alpha=0.6)
+            if self.Omega != 0:
+                plt.plot(self.Delta, self.Omega_non_zero_energies[:, i], color=f'C{i}', ls=':', alpha=0.6)
 
             if plot_state_names:
-                Delta_index = int(plot_points / len(states)) * i + int(plot_points / 2 / len(states))
+                Delta_index = int(plot_points / len(self.states)) * i + int(plot_points / 2 / len(self.states))
                 text_x = self.Delta[Delta_index]
-                text_y = omega_zero_all_energies[Delta_index, i]
+                text_y = self.Omega_zero_energies[Delta_index, i]
                 plt.text(text_x, text_y, label, ha='center', color=f'C{i}', fontsize=16, fontweight='bold')
 
         if plot_state_names:
@@ -164,7 +188,7 @@ class TimeIndependentEvolvingQubitSystem(BaseQubitSystem):
         self.Delta = Delta
         self.t_list = t_list
 
-        self.psi_0 = q.kron(*states_quimb.get_ground_states(N)) if psi_0 is None else psi_0
+        self.psi_0 = q.kron(*states_quimb.get_ground_states(N, sparse=True)) if psi_0 is None else psi_0
         self.ghz_state = ghz_state
 
         self.evo: Optional[q.Evolution] = None
@@ -331,7 +355,7 @@ class TimeIndependentEvolvingQubitSystem(BaseQubitSystem):
             raise ValueError(f"target_state has to be one of 'ghz', 'ground', or 'excited', not {target_state}.")
 
 
-cached_hamiltonian_variables: Dict[Tuple[int, float], Tuple[q.qarray, q.qarray, q.qarray]] = {}
+cached_hamiltonian_variables: Dict[Tuple[int, float, int], Tuple[q.qarray, q.qarray, q.qarray]] = {}
 
 
 # (N, V, hash(geometry)): (time-independent, Omega, Delta)
@@ -375,35 +399,6 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         return ti + Omega * Omega_var + Delta * Delta_var
 
-    def _get_hamiltonian_variables(self) -> Tuple[q.qarray, q.qarray, q.qarray]:
-        sx = q.pauli("X")
-        sz = q.pauli("Z")
-        qnum = (sz + q.identity(2)) / 2
-        dims = [2] * self.N
-
-        # noinspection PyTypeChecker
-        time_independent_terms: q.qarray = 0
-        # noinspection PyTypeChecker
-        Omega_coeff_terms: q.qarray = 0
-        # noinspection PyTypeChecker
-        Delta_coeff_terms: q.qarray = 0
-
-        for i in range(self.N):
-            Omega_coeff_terms += q.ikron(sx, dims=dims, inds=i) / 2
-            n_i = q.ikron(qnum, dims=dims, inds=i)
-            Delta_coeff_terms -= n_i
-
-            for j in range(i):
-                n_j = q.ikron(qnum, dims=dims, inds=j)
-
-                time_independent_terms += self.V / self.geometry.get_distance(i, j) ** 6 * n_i * n_j
-
-        return (
-            time_independent_terms,
-            Omega_coeff_terms,
-            Delta_coeff_terms
-        )
-
     def solve(self) -> List[q.qarray]:
         dt = self.t_list[1]
 
@@ -419,6 +414,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
                 latest_state,
                 self.get_hamiltonian(Omega, Delta),
                 # method="expm",
+                method="integrate",
                 # progbar=True,
             )
             solve_points = np.linspace(0, dt, self.solve_points_per_timestep + 1)[1:]  # Take away t=0 as a solve point
@@ -483,7 +479,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
     def plot_ghz_states_overlaps(self, ax, with_antisymmetric_ghz: bool, plot_title: bool = True):
         labelled_states = [(self.ghz_state.get_state_tensor(), r"$\psi_{\mathrm{GHZ}}^{\mathrm{s}}$")]
-        if with_antisymmetric_ghz is not None:
+        if with_antisymmetric_ghz:
             labelled_states.append(
                 (self.ghz_state.get_state_tensor(symmetric=False), r"$\psi_{\mathrm{GHZ}}^{\mathrm{a}}$"))
 
@@ -562,7 +558,9 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
     def get_fidelity_with(self, target_state: Union[str, q.qarray] = "ghz") -> float:
         """
-        :param target_state: One of "ghz", "ghz_antisymmetric", "ground", and "excited"
+        :param target_state:
+            One of "ghz", "ghz_antisymmetric", "ground", and "excited".
+            Can also be ghz_component_1 or ghz_component_2
         :return:
         """
         assert (self.evo is not None), "evo attribute cannot be None (call solve method)"
@@ -572,6 +570,10 @@ class EvolvingQubitSystem(BaseQubitSystem):
             return q.fidelity(final_state, self.ghz_state.get_state_tensor(symmetric=True))
         elif target_state == "ghz_antisymmetric":
             return q.fidelity(final_state, self.ghz_state.get_state_tensor(symmetric=False))
+        elif target_state == "ghz_component_1":
+            return q.fidelity(final_state, self.ghz_state._get_components()[0])
+        elif target_state == "ghz_component_2":
+            return q.fidelity(final_state, self.ghz_state._get_components()[1])
         elif target_state == "ground":
             return q.fidelity(final_state, q.kron(*states_quimb.get_ground_states(self.N)))
         elif target_state == "excited":

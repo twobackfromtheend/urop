@@ -22,13 +22,13 @@ class BaseGHZState:
 
 class StandardGHZState(BaseGHZState):
     def _get_components(self) -> Tuple[q.qarray, q.qarray]:
-        return q.kron(*get_ground_states(self.N)), q.kron(*get_excited_states(self.N))
+        return q.kron(*get_ground_states(self.N, sparse=True)), q.kron(*get_excited_states(self.N, sparse=True))
 
 
 class AlternatingGHZState(BaseGHZState):
     def _get_components(self) -> Tuple[q.qarray, q.qarray]:
-        ghz_1 = q.kron(*[q.ket([0, 1]) if _ % 2 == 0 else q.ket([1, 0]) for _ in range(self.N)])
-        ghz_2 = q.kron(*[q.ket([0, 1]) if _ % 2 == 1 else q.ket([1, 0]) for _ in range(self.N)])
+        ghz_1 = q.kron(*[q.ket([0, 1], sparse=True) if _ % 2 == 0 else q.ket([1, 0], sparse=True) for _ in range(self.N)])
+        ghz_2 = q.kron(*[q.ket([0, 1], sparse=True) if _ % 2 == 1 else q.ket([1, 0], sparse=True) for _ in range(self.N)])
         return ghz_1, ghz_2
 
 

@@ -4,7 +4,7 @@ from paper_data.delta import Delta
 from paper_data.interpolation import get_hamiltonian_coeff_fn
 from paper_data.omega import Omega
 
-V = 2 * constants.pi * 24e6
+V = 2 * constants.pi * 24e6  # MHz
 
 __all__ = [
     'V', 'Delta', 'Omega', 'get_hamiltonian_coeff_fn'

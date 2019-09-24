@@ -6,7 +6,7 @@ from qutip.control.optimresult import OptimResult
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.qubit_system_classes import EvolvingQubitSystem
-from qubit_system.utils.ghz_states import StandardGHZState
+from qubit_system.utils.ghz_states import StandardGHZState, BaseGHZState
 from qubit_system.utils.interpolation import get_hamiltonian_coeff_interpolation
 
 
@@ -46,9 +46,12 @@ def get_normalised_hamiltonian(N: int, norm_V: float):
 
 def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, target_state_symmetric: bool = True,
                            optim_kwargs: dict = None,
+                           ghz_state: BaseGHZState = None,
                            alg="GRAPE") -> OptimResult:
     norm_H_d, norm_H_c, psi_0 = get_normalised_hamiltonian(N, norm_V)
-    target_state = StandardGHZState(N).get_state_tensor(target_state_symmetric)
+    if ghz_state is None:
+        ghz_state = StandardGHZState(N)
+    target_state = ghz_state.get_state_tensor(target_state_symmetric)
 
     optim_shared_kwargs = dict(
         amp_lbound=0, amp_ubound=3,
@@ -63,7 +66,7 @@ def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, targ
     if alg == "GRAPE":
         optim_kwargs_['init_pulse_type'] = "RND"
     else:
-        optim_kwargs_['guess_pulse_type']="RND"
+        optim_kwargs_['guess_pulse_type'] = "RND"
 
     optim_kwargs_ = {**optim_kwargs_, **optim_kwargs}
     if alg == "GRAPE":
@@ -89,9 +92,11 @@ def get_optimised_controls(N: int, n_ts: int, norm_t: float, norm_V: float, targ
     return norm_result
 
 
-def report_stats(result: OptimResult, N: int, target_state_symmetric: bool = True):
+def report_stats(result: OptimResult, N: int, target_state_symmetric: bool = True, ghz_state: BaseGHZState = None, ):
     result.stats.report()
-    target_state = StandardGHZState(N).get_state_tensor(target_state_symmetric)
+    if ghz_state is None:
+        ghz_state = StandardGHZState(N)
+    target_state = ghz_state.get_state_tensor(target_state_symmetric)
 
     final_fidelity = qutip.fidelity(target_state, result.evo_full_final) ** 2
     print(f"Final fidelity: {final_fidelity:.5f}")
@@ -100,7 +105,11 @@ def report_stats(result: OptimResult, N: int, target_state_symmetric: bool = Tru
     print(f"Terminated due to: {result.termination_reason}")
 
 
-def plot_optimresult(result: OptimResult, N: int, t: float, C6: float, characteristic_V: float, geometry: BaseGeometry):
+def plot_optimresult(result: OptimResult, N: int, t: float, C6: float, characteristic_V: float, geometry: BaseGeometry,
+                     ghz_state: BaseGHZState = None):
+    if ghz_state is None:
+        ghz_state = StandardGHZState(N)
+
     final_Omega = np.hstack((result.final_amps[:, 0], result.final_amps[-1, 0]))
     final_Delta = np.hstack((result.final_amps[:, 1], result.final_amps[-1, 1]))
     time = result.time / characteristic_V
@@ -112,7 +121,7 @@ def plot_optimresult(result: OptimResult, N: int, t: float, C6: float, character
         Omega=get_hamiltonian_coeff_interpolation(time, final_Omega, "previous"),
         Delta=get_hamiltonian_coeff_interpolation(time, final_Delta, "previous"),
         t_list=np.linspace(0, t, 300),
-        ghz_state=StandardGHZState(N)
+        ghz_state=ghz_state
     )
     solve_and_print_stats(e_qs)
 
