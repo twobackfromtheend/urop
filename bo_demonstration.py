@@ -1,20 +1,26 @@
+from functools import partial
 from typing import Callable, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+import quimb as q
+import tqdm
 from GPyOpt.methods import BayesianOptimization
 from scipy.interpolate import interp1d
 from scipy.signal.windows import tukey
 
 from qubit_system.geometry.base_geometry import BaseGeometry
-from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem
-from qubit_system.utils.ghz_states_quimb import StandardGHZState, AlternatingGHZState
+from qubit_system.geometry.double_ring import DoubleRing
+from qubit_system.geometry.star import Star
+from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem, StaticQubitSystem
+from qubit_system.utils.ghz_states_quimb import BaseGHZState, CustomGHZState
 
 plt.rcParams['savefig.dpi'] = 600
 
 
 def get_solved_episode(input_: np.ndarray,
                        N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray,
+                       ghz_state: BaseGHZState,
                        interpolation_timesteps: int = 3000) -> EvolvingQubitSystem:
     timesteps = len(t_list) - 1
 
@@ -22,47 +28,53 @@ def get_solved_episode(input_: np.ndarray,
     Delta_params = input_[timesteps:]
 
     _t_list = np.linspace(0, t_list[-1], interpolation_timesteps + 1)
+    interp = partial(interp1d,
+                     # kind="cubic",
+                     kind="quadratic",
+                     # kind="linear",
+                     # kind="previous",
+                     )
 
-    Omega_func: Callable[[float], float] = interp1d(t_list, np.hstack((Omega_params, Omega_params[-1])),
-                                                    kind="quadratic")
+    Omega_func: Callable[[float], float] = interp(t_list, np.hstack((Omega_params, Omega_params[-1])))
     Omega_shape_window = tukey(interpolation_timesteps + 1, alpha=0.2)
     Omega = np.array([Omega_func(_t) * Omega_shape_window[_i] for _i, _t in enumerate(_t_list[:-1])])
 
-    Delta_func: Callable[[float], float] = interp1d(t_list, np.hstack((Delta_params, Delta_params[-1])),
-                                                    kind="quadratic")
+    Delta_func: Callable[[float], float] = interp(t_list, np.hstack((Delta_params, Delta_params[-1])))
     Delta = np.array([Delta_func(_t) for _t in _t_list[:-1]])
 
     e_qs = EvolvingQubitSystem(
         N, V, geometry,
         Omega, Delta,
         _t_list,
-        # ghz_state=StandardGHZState(N)
-        ghz_state=AlternatingGHZState(N)
+        ghz_state=ghz_state
     )
     e_qs.solve()
     return e_qs
 
 
-def get_f(N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray):
+def get_f(N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray, ghz_state: BaseGHZState):
     def f(inputs: np.ndarray) -> np.ndarray:
         """
         :param inputs: 2-dimensional array
         :return: 2-dimentional array, one-evaluation per row
         """
+
         def get_figure_of_merit(*args):
-            e_qs = get_solved_episode(*args, N=N, V=V, geometry=geometry, t_list=t_list)
+            e_qs = get_solved_episode(*args, N=N, V=V, geometry=geometry, t_list=t_list, ghz_state=ghz_state)
             # return 1 - e_qs.get_fidelity_with("ghz")
             # component_products = e_qs.get_fidelity_with("ground") * e_qs.get_fidelity_with("excited") * 4
-            component_products = e_qs.get_fidelity_with("ghz_component_1") * e_qs.get_fidelity_with("ghz_component_2") * 4
-            # ghz_above_half = max(e_qs.get_fidelity_with("ghz") - 0.5, 0) * 2
-            # return 1 - component_products * ghz_above_half
-            return 1 - component_products
+            component_products = e_qs.get_fidelity_with("ghz_component_1") * e_qs.get_fidelity_with(
+                "ghz_component_2") * 4
+            # return 1 - component_products
+            ghz_above_half = max(e_qs.get_fidelity_with("ghz") - 0.5, 0) * 2
+            return 1 - component_products * ghz_above_half
+
         return np.apply_along_axis(get_figure_of_merit, 1, inputs).reshape((-1, 1))
 
     return f
 
 
-def get_domain(Omega_limits: Tuple[float, float], Delta_limits: Tuple[float, float], timesteps: int):
+def get_domain(Omega_limits: Tuple[float, float], Delta_limits: Tuple[float, float], timesteps: int) -> List[dict]:
     return [
                {
                    'name': f'var_{i}',
@@ -110,7 +122,7 @@ def optimise(f: Callable, domain: List[dict]):
     )
 
     optimisation_kwargs = {
-        'max_iter': 100,
+        'max_iter': 50,
         # 'max_time': 300,
     }
     print(f"optimisation_kwargs: {optimisation_kwargs}")
@@ -122,13 +134,50 @@ def optimise(f: Callable, domain: List[dict]):
 
 
 def plot_result(bo: BayesianOptimization,
-                N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray):
-    bo.plot_convergence()
+                N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray, ghz_state: BaseGHZState,
+                **kwargs):
+    # bo.plot_convergence()
     optimised_controls = bo.x_opt
     e_qs = get_solved_episode(input_=optimised_controls, N=N, V=V, geometry=geometry, t_list=t_list,
+                              ghz_state=ghz_state,
                               interpolation_timesteps=3000)
     print(f"fidelity: {e_qs.get_fidelity_with('ghz')}")
-    e_qs.plot(show=True)
+    plot_kwargs = {'show': True}
+    e_qs.plot(**{**plot_kwargs, **kwargs})
+
+
+def get_crossing(ghz_state: BaseGHZState, geometry: BaseGeometry, N: int, V: float):
+    ghz_1 = ghz_state._get_components()[1]
+    Delta_range = np.linspace(-characteristic_V * 5, characteristic_V * 5, 50)
+
+    s_qs = StaticQubitSystem(
+        N=N, V=V, geometry=geometry,
+        Omega=0, Delta=Delta_range,
+    )
+
+    energies = []
+    for detuning in Delta_range:
+        H = s_qs.get_hamiltonian(detuning)
+        energy = q.expec(H, ghz_1).real
+        energies.append(energy)
+    energies = np.array(energies)
+
+    def find_root(x: np.ndarray, y: np.ndarray):
+        """
+        Finds crossing (where y equals 0), given that x, y is roughly linear.
+        """
+        if (y == 0).all():
+            return np.nan
+        _right_bound = (y < 0).argmax()
+        _left_bound = _right_bound - 1
+        crossing = y[_left_bound] / (y[_left_bound] - y[_right_bound]) \
+                   * (x[_right_bound] - x[_left_bound]) + x[_left_bound]
+        return crossing
+
+    crossing = find_root(Delta_range, energies)
+    print(f"Found crossing: {crossing:.3e}")
+
+    return crossing
 
 
 if __name__ == '__main__':
@@ -163,26 +212,90 @@ if __name__ == '__main__':
     # )
 
     N = 8
-    timesteps = 4
+    timesteps = 3
     t = 2e-6
-    geometry = RegularLattice1D(LATTICE_SPACING)
     t_list = np.linspace(0, t, timesteps + 1)
 
-    f = get_f(
-        N, C6,
-        geometry=geometry,
-        t_list=t_list
-    )
+    configurations: List[Tuple[BaseGeometry, BaseGHZState, Tuple, str]] = [
+        #
+        (RegularLattice1D(LATTICE_SPACING),
+         CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+         ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+         "1d_std"),
 
-    domain = get_domain(
-        # Omega_limits=(0, characteristic_V),
-        # Delta_limits=(0.85 * characteristic_V, characteristic_V),
-        # Delta_limits=(0, 3 * characteristic_V),
-        # Delta_limits=(0.7 * characteristic_V, 1.2 * characteristic_V),
-        Omega_limits=(0, 0.1 * characteristic_V),
-        Delta_limits=(0, 0.2 * characteristic_V),
+        # (RegularLattice1D(LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, True, False, True, False]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "1d_alt"),
 
-        timesteps=timesteps
-    )
-    bo = optimise(f, domain)
-    plot_result(bo, N, C6, geometry, t_list)
+        # (RegularLattice2D((4, 2), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2d_std"),
+        #
+        # (RegularLattice2D((4, 2), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, False, True, True, False, False, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2d_alt"),
+        #
+        # (RegularLattice3D((2, 2, 2), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "3d_std"),
+        #
+        # (RegularLattice3D((2, 2, 2), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, False, True, False, True, True, False]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "3d_alt"),
+        #
+        # (DoubleRing(8, spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2D_ring_std"),
+        #
+        # (DoubleRing(8, spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, False, True, False, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2D_ring_alt"),
+        # (Star(8, spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2D_star_std"),
+        #
+        # (Star(8, spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, False, True, False, True]),
+        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
+        #  "2D_star_alt"),
+    ]
+
+    REPEATS = 2
+    for i, (geometry, ghz_state, domain_limits, name) in enumerate(tqdm.tqdm(configurations)):
+        crossing = get_crossing(ghz_state, geometry, N, C6)
+        Omega_limits = (0, crossing)
+        Delta_limits = (0.5 * crossing, 1.5 * crossing)
+        domain = get_domain(Omega_limits, Delta_limits, timesteps)
+
+        fidelities = []
+        for repeat in range(REPEATS):
+            f = get_f(
+                N, C6,
+                geometry=geometry,
+                t_list=t_list,
+                ghz_state=ghz_state
+            )
+            bo = optimise(f, domain)
+            optimised_controls = bo.x_opt
+            e_qs = get_solved_episode(input_=optimised_controls, N=N, V=C6, geometry=geometry, t_list=t_list,
+                                      ghz_state=ghz_state,
+                                      interpolation_timesteps=3000)
+            fidelity = e_qs.get_fidelity_with('ghz')
+            # print(f"fidelity: {fidelity}")
+            plot_result(bo, N, C6, geometry, t_list, ghz_state, show=True)
+            # plot_result(bo, N, C6, geometry, t_list, ghz_state, savefig_name=f"bo_demo_{name}_{repeat}", show=False)
+            fidelities.append(fidelity)
+
+        fidelities = np.array(fidelities)
+        print(f"\n\n{i}"
+              f"\n\t {fidelities}"
+              f"\n\t {fidelities.mean()}"
+              f"\n\t {fidelities.std()}")
