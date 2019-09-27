@@ -433,12 +433,13 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         if fig_kwargs is None:
             fig_kwargs = {}
-        fig_kwargs = {**dict(figsize=(15, 9)), **fig_kwargs}
+        fig_kwargs = {**dict(figsize=(12, 9)), **fig_kwargs}
 
-        fig, axs = plt.subplots(3, 1, sharex='all', **fig_kwargs)
+        fig, axs = plt.subplots(4, 1, sharex='all', **fig_kwargs)
         self.plot_Omega_and_Delta(axs[0], plot_title=plot_titles)
         self.plot_ghz_states_overlaps(axs[1], with_antisymmetric_ghz, plot_title=plot_titles)
         self.plot_basis_states_overlaps(axs[2], plot_title=plot_titles, plot_others_as_sum=plot_others_as_sum)
+        self.plot_entanglement_entropies(axs[3], plot_title=plot_titles)
 
         plt.xlabel('Time')
         plt.tight_layout()
@@ -544,9 +545,9 @@ class EvolvingQubitSystem(BaseQubitSystem):
                     label=r"$\sum{\textrm{Others}}$",
                     color='C1', linestyle=":", linewidth=1, alpha=0.7)
 
-        ax.set_ylabel("Fidelity")
+        ax.set_ylabel("Population")
         if plot_title:
-            ax.set_title("Fidelity with basis states")
+            ax.set_title("Basis state populations")
         ax.set_ylim((-0.1, 1.1))
         ax.yaxis.set_ticks([0, 0.5, 1])
 
@@ -555,6 +556,18 @@ class EvolvingQubitSystem(BaseQubitSystem):
         # sort both labels and handles by labels
         labels, handles = zip(*sorted(zip(labels, handles)))
         ax.legend(handles, labels)
+
+    def plot_entanglement_entropies(self, ax, plot_title: bool = True):
+        subsystem_entropy = [q.entropy_subsys(state_, [2] * self.N, np.arange(self.N / 2))
+                             for state_ in self.solved_states]
+        label = r"$\mathcal{S}\, ( \rho_A )$"
+        ax.plot(self.solved_t_list, subsystem_entropy, label=label)
+
+        ax.set_ylabel(label)
+        if plot_title:
+            ax.set_title("Entanglement Entropy")
+        ax.set_ylim((0, self.N / 2))
+        ax.legend()
 
     def get_fidelity_with(self, target_state: Union[str, q.qarray] = "ghz") -> float:
         """
