@@ -516,8 +516,13 @@ class EvolvingQubitSystem(BaseQubitSystem):
             if 'e' not in label or 'g' not in label:
                 fidelities.append(state_fidelities)
 
-            plot_label = r"$P_{" + f"{label.upper()[0]}" + "}$" \
-                if plot_individual_orthogonal_state_labels or ('e' not in label or 'g' not in label) else 'Others'
+            if ('e' not in label or 'g' not in label):
+                plot_label = r"$P_{" + f"{label.upper()[0]}" + "}$"
+            elif plot_individual_orthogonal_state_labels:
+                plot_label = r"$P_{" + f"{label.upper()}" + "}$"
+            else:
+                plot_label = 'Others'
+
             if plot_label == 'Others':
                 if plotted_others:
                     plot_label = None
