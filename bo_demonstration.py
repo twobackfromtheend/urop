@@ -11,6 +11,7 @@ from scipy.signal.windows import tukey
 
 from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.geometry.double_ring import DoubleRing
+from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 from qubit_system.geometry.star import Star
 from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem, StaticQubitSystem
 from qubit_system.utils.ghz_states_quimb import BaseGHZState, CustomGHZState
@@ -211,17 +212,16 @@ if __name__ == '__main__':
     #     ]
     # )
 
-    N = 8
+    N = 2
     timesteps = 3
     t = 2e-6
     t_list = np.linspace(0, t, timesteps + 1)
 
-    configurations: List[Tuple[BaseGeometry, BaseGHZState, Tuple, str]] = [
+    configurations: List[Tuple[BaseGeometry, BaseGHZState, str]] = [
         #
-        (RegularLattice1D(LATTICE_SPACING),
-         CustomGHZState(N, [True, True, True, True, True, True, True, True]),
-         ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
-         "1d_std"),
+        # (RegularLattice1D(LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
+        #  "1d_std"),
 
         # (RegularLattice1D(LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, True, False, True, False, True, False]),
@@ -235,41 +235,50 @@ if __name__ == '__main__':
         #
         # (RegularLattice2D((4, 2), spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, False, True, True, False, False, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "2d_alt"),
         #
         # (RegularLattice3D((2, 2, 2), spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "3d_std"),
         #
         # (RegularLattice3D((2, 2, 2), spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, False, True, False, True, True, False]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "3d_alt"),
         #
         # (DoubleRing(8, spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "2D_ring_std"),
         #
         # (DoubleRing(8, spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, True, False, False, True, False, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "2D_ring_alt"),
+        #
         # (Star(8, spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, True, True, True, True, True, True, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "2D_star_std"),
         #
         # (Star(8, spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, True, False, False, True, False, True]),
-        #  ((0, 0.1 * characteristic_V), (0, 0.2 * characteristic_V)),
         #  "2D_star_alt"),
+
+        # (RegularLattice2D((4, 3), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False]),
+        #  "2d_alt_n12"),
+        # (RegularLattice2D((4, 4), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, False, True, False, True, True, False, True, False, False, True, False, True]),
+        #  "2d_alt_n16"),
+
+        # (RegularLattice1D(LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True, True, True]),
+        #  "1d_std_n4"),
+
+        (RegularLattice1D(LATTICE_SPACING),
+         CustomGHZState(N, [True, True]),
+         "1d_std_n2"),
     ]
 
     REPEATS = 2
-    for i, (geometry, ghz_state, domain_limits, name) in enumerate(tqdm.tqdm(configurations)):
+    for i, (geometry, ghz_state, name) in enumerate(tqdm.tqdm(configurations)):
         crossing = get_crossing(ghz_state, geometry, N, C6)
         Omega_limits = (0, crossing)
         Delta_limits = (0.5 * crossing, 1.5 * crossing)
