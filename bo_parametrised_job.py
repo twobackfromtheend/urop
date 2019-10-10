@@ -26,16 +26,18 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 
 job_id = os.getenv("PBS_JOBID")
 N = int(os.getenv("N"))
-geometry = eval(os.getenv("Q_GEOMETRY"))
-ghz_state = eval(os.getenv("Q_GHZ_STATE"))
+geometry_envvar = os.getenv("Q_GEOMETRY")
+geometry = eval(geometry_envvar)
+ghz_state_envvar = os.getenv("Q_GHZ_STATE")
+ghz_state = eval(ghz_state_envvar)
 repeats = int(os.getenv("REPEATS"))
 
 print(
     "Parameters:\n"
     f"\tjob_id: {job_id}\n"
     f"\tN: {N}\n"
-    f"\tQ_GEOMETRY: {geometry}\n"
-    f"\tQ_GHZ_STATE: {ghz_state}\n"
+    f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
+    f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
     f"\tREPEATS: {repeats}\n"
 )
 
@@ -209,7 +211,6 @@ def get_crossing(ghz_state: BaseGHZState, geometry: BaseGeometry, N: int, V: flo
     return crossing
 
 
-N = 4
 timesteps = 3
 t = 2e-6
 t_list = np.linspace(0, t, timesteps + 1)
