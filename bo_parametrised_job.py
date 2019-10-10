@@ -5,36 +5,24 @@ from typing import Callable, List, Tuple
 
 import numpy as np
 import quimb as q
-import qutip
-import qutip.control.pulseoptim as cpo
-import tqdm
 from GPyOpt.methods import BayesianOptimization
-from qutip.control.optimresult import OptimResult
 from scipy.interpolate import interp1d
 from scipy.signal.windows import tukey
 
 import interaction_constants
 from ifttt_webhook import trigger_event
-from qubit_system.geometry.base_geometry import BaseGeometry
-from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
-from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
+from qubit_system.geometry import *
 from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem, StaticQubitSystem
 from qubit_system.utils.ghz_states_quimb import *
 
-C6_coeff = int(os.getenv("C6_COEFF", 1))
-MAX_WALL_TIME = int(os.getenv("MAX_WALL_TIME"))
-AMP_BOUNDS = eval(os.getenv("AMP_BOUNDS"))
-
 N_RYD = 50
-C6 = interaction_constants.get_C6(N_RYD) * C6_coeff
+C6 = interaction_constants.get_C6(N_RYD)
 
 LATTICE_SPACING = 1.5e-6
 
 print(f"C6: {C6:.3e}")
 characteristic_V = C6 / (LATTICE_SPACING ** 6)
 print(f"Characteristic V: {characteristic_V:.3e} Hz")
-
 
 job_id = os.getenv("PBS_JOBID")
 N = int(os.getenv("N"))
