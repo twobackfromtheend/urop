@@ -59,6 +59,7 @@ def get_f(N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray, ghz_stat
         :param inputs: 2-dimensional array
         :return: 2-dimentional array, one-evaluation per row
         """
+        print(f"inputs: {inputs}")
 
         def get_figure_of_merit(*args):
             e_qs = get_solved_episode(*args, N=N, V=V, geometry=geometry, t_list=t_list, ghz_state=ghz_state)
@@ -67,7 +68,9 @@ def get_f(N: int, V: float, geometry: BaseGeometry, t_list: np.ndarray, ghz_stat
             component_products = e_qs.get_fidelity_with("ghz_component_1") * e_qs.get_fidelity_with(
                 "ghz_component_2") * 4
             # return 1 - component_products
-            ghz_above_half = max(e_qs.get_fidelity_with("ghz") - 0.5, 0) * 2
+            ghz_fidelity = e_qs.get_fidelity_with("ghz")
+            ghz_above_half = max(ghz_fidelity - 0.5, 0) * 2
+            print(f"fidelity: {ghz_fidelity:.3f}")
             return 1 - component_products * ghz_above_half
 
         return np.apply_along_axis(get_figure_of_merit, 1, inputs).reshape((-1, 1))
@@ -212,7 +215,7 @@ if __name__ == '__main__':
     #     ]
     # )
 
-    N = 2
+    N = 20
     timesteps = 3
     t = 2e-6
     t_list = np.linspace(0, t, timesteps + 1)
@@ -264,17 +267,22 @@ if __name__ == '__main__':
         # (RegularLattice2D((4, 3), spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False]),
         #  "2d_alt_n12"),
+
         # (RegularLattice2D((4, 4), spacing=LATTICE_SPACING),
         #  CustomGHZState(N, [True, False, True, False, False, True, False, True, True, False, True, False, False, True, False, True]),
         #  "2d_alt_n16"),
+
+        (RegularLattice2D((4, 5), spacing=LATTICE_SPACING),
+         CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False]),
+         "2d_alt_n20"),
 
         # (RegularLattice1D(LATTICE_SPACING),
         #  CustomGHZState(N, [True, True, True, True]),
         #  "1d_std_n4"),
 
-        (RegularLattice1D(LATTICE_SPACING),
-         CustomGHZState(N, [True, True]),
-         "1d_std_n2"),
+        # (RegularLattice1D(LATTICE_SPACING),
+        #  CustomGHZState(N, [True, True]),
+        #  "1d_std_n2"),
     ]
 
     REPEATS = 2

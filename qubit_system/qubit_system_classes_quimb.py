@@ -407,7 +407,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         latest_state = state = self.psi_0
         latest_time = 0
-        for i in tqdm(range(len(self.Omega))):
+        # for i in tqdm(range(len(self.Omega))):
+        for i in range(len(self.Omega)):
             Omega = self.Omega[i]
             Delta = self.Delta[i]
             self.evo = q.Evolution(
@@ -507,7 +508,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
 
         plot_individual_orthogonal_state_labels = len(states) <= 4
         plotted_others = False
-        for i, state in enumerate(tqdm(states)):
+        # for i, state in enumerate(tqdm(states)):
+        for i, state in enumerate(states):
             label = states_quimb.get_label_from_state(state)
             state_product_basis_index = states_quimb.get_product_basis_states_index(state)
             state_fidelities = [np.abs(_instantaneous_state.flatten()[state_product_basis_index]) ** 2
