@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from typing import Callable, List, Tuple
 
@@ -49,7 +50,9 @@ def get_solved_episode(input_: np.ndarray,
         _t_list,
         ghz_state=ghz_state
     )
+    start_time = time.time()
     e_qs.solve()
+    print(f"Solved in {time.time() - start_time:.3f}s")
     return e_qs
 
 
@@ -215,7 +218,7 @@ if __name__ == '__main__':
     #     ]
     # )
 
-    N = 20
+    N = 4
     timesteps = 3
     t = 2e-6
     t_list = np.linspace(0, t, timesteps + 1)
@@ -272,13 +275,13 @@ if __name__ == '__main__':
         #  CustomGHZState(N, [True, False, True, False, False, True, False, True, True, False, True, False, False, True, False, True]),
         #  "2d_alt_n16"),
 
-        (RegularLattice2D((4, 5), spacing=LATTICE_SPACING),
-         CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False]),
-         "2d_alt_n20"),
+        # (RegularLattice2D((4, 5), spacing=LATTICE_SPACING),
+        #  CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False]),
+        #  "2d_alt_n20"),
 
-        # (RegularLattice1D(LATTICE_SPACING),
-        #  CustomGHZState(N, [True, True, True, True]),
-        #  "1d_std_n4"),
+        (RegularLattice1D(LATTICE_SPACING),
+         CustomGHZState(N, [True, True, True, True]),
+         "1d_std_n4"),
 
         # (RegularLattice1D(LATTICE_SPACING),
         #  CustomGHZState(N, [True, True]),
