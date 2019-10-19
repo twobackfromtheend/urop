@@ -1,8 +1,7 @@
+quimb
 gym
 matplotlib
 numpy
-qutip
 requests
 scipy
-stable_baselines
 tqdm

@@ -10,12 +10,10 @@ from GPyOpt.methods import BayesianOptimization
 from scipy.interpolate import interp1d
 from scipy.signal.windows import tukey
 
-from qubit_system.geometry.base_geometry import BaseGeometry
-from qubit_system.geometry.double_ring import DoubleRing
-from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
-from qubit_system.geometry.star import Star
-from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem, StaticQubitSystem
-from qubit_system.utils.ghz_states_quimb import BaseGHZState, CustomGHZState
+from qubit_system.geometry import *
+from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
+from qubit_system.qubit_systems.static_qubit_system import StaticQubitSystem
+from qubit_system.utils.ghz_states import BaseGHZState, CustomGHZState
 
 plt.rcParams['savefig.dpi'] = 600
 

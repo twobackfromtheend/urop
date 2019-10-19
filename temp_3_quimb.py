@@ -13,18 +13,19 @@ from tqdm import tqdm
 import paper_data
 from paper_data.interpolation import get_hamiltonian_coeff_fn
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
-from qubit_system.qubit_system_classes_quimb import EvolvingQubitSystem
-from qubit_system.utils.ghz_states_quimb import AlternatingGHZState
+from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
+from qubit_system.utils.ghz_states import AlternatingGHZState
 
 plt.rcParams['savefig.dpi'] = 600
 # plt.plot([0, 1.1], [-18, 18])
 # plt.grid()
 # plt.tight_layout()
 # plt.show()
-from qubit_system.utils.states_quimb import get_states, get_label_from_state, get_product_basis_states_index
+from qubit_system.utils.states import get_states, get_label_from_state, get_product_basis_states_index
 
 t = 1.1e-6
 N = 20
+print(f"N: {N}")
 ghz_state = AlternatingGHZState(N)
 num_ts = 150
 Omega_func = get_hamiltonian_coeff_fn(paper_data.Omega, N)
@@ -119,7 +120,7 @@ def solve(e_qs: EvolvingQubitSystem) -> List[q.qarray]:
 
 solved_states = solve(e_qs)
 
-print(f"solved in {time.time() - start_time:.3f}s")
+print(f"Solved in {time.time() - start_time:.3f}s")
 
 
 def calculate_subsystem_entropy(state: q.qarray):
@@ -128,9 +129,9 @@ def calculate_subsystem_entropy(state: q.qarray):
 
 start_time = time.time()
 subsystem_entropy = [calculate_subsystem_entropy(state_) for state_ in e_qs.solved_states]
-print(f"calculated entropies in {time.time() - start_time:.3f}s")
-print("plotting.")
+print(f"Calculated entropies in {time.time() - start_time:.3f}s")
 
+print("Plotting protocol, GHZ state fidelity, and entanglement entropy.")
 fig, axs = plt.subplots(3, 1, sharex='all', figsize=(10, 8))
 ax0, ax1, ax2 = axs
 ax0.xaxis.set_major_formatter(ticker.EngFormatter('s'))
@@ -158,7 +159,7 @@ ax2.plot(
     subsystem_entropy,
 )
 ax2.set_title("Entanglement Entropy")
-ax2.set_ylabel(r"$e^{ \mathcal{S} ( \rho_A ) } \, / \, \frac{N}{2}$")
+ax2.set_ylabel(r"$\mathcal{S}\, ( \rho_A )$")
 
 plt.tight_layout()
 for ax in axs:
@@ -168,7 +169,7 @@ for ax in axs:
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-# plt.show()
+plt.show()
 
 
 def plot_basis_state_populations_2d(e_qs: EvolvingQubitSystem, log=False, log_limit=1e-5):
@@ -205,7 +206,8 @@ def plot_basis_state_populations_2d(e_qs: EvolvingQubitSystem, log=False, log_li
             ax.set_ylim(log_limit, 1)
             ax.set_yscale('log', basey=10)
         ax.grid(axis='y')
-        ax.set_ylabel(f"{e_qs.solved_t_list[i]:.2e}s")
+        _t = e_qs.solved_t_list[i]
+        ax.set_ylabel(f"{_t :.2e}s")
 
         _solve_result_state = e_qs.solved_states[i]
         solve_result_state_populations = np.abs(_solve_result_state.flatten()) ** 2
@@ -213,7 +215,7 @@ def plot_basis_state_populations_2d(e_qs: EvolvingQubitSystem, log=False, log_li
         basis_state_populations += np.ones_like(basis_state_populations) * log_limit
 
         above_limit = np.count_nonzero(solve_result_state_populations > log_limit)
-        print(f"above limit {log_limit:.0e} \t count: {above_limit:4d} \t ({above_limit / 2 ** e_qs.N:5.1%})")
+        print(f"above limit {log_limit:.0e} \t count: {above_limit:4d} \t ({above_limit / 2 ** e_qs.N:5.1%}) \t t: {_t :.2e}")
 
         ax.fill_between(x, np.zeros_like(basis_state_populations), basis_state_populations, step='mid')
 
@@ -225,8 +227,11 @@ def plot_basis_state_populations_2d(e_qs: EvolvingQubitSystem, log=False, log_li
         )
     else:
         plt.xticks(x, labels)
+    print("tight layout")
     plt.tight_layout()
+    print("plotting")
     plt.show()
 
 
+print("Plotting basis state populations")
 plot_basis_state_populations_2d(e_qs, log=True)

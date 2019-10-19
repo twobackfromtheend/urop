@@ -4,6 +4,3 @@ class BaseGeometry:
 
     def plot(self):
         raise NotImplementedError
-
-    def __hash__(self) -> int:
-        raise NotImplementedError

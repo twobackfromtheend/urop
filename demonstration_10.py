@@ -11,8 +11,8 @@ from qubit_system.geometry.base_geometry import BaseGeometry
 from qubit_system.geometry.regular_lattice_1d import RegularLattice1D
 from qubit_system.geometry.regular_lattice_2d import RegularLattice2D
 from qubit_system.geometry.regular_lattice_3d import RegularLattice3D
-from qubit_system.qubit_system_classes_quimb import StaticQubitSystem
-from qubit_system.utils import states_quimb
+from qubit_system.qubit_systems.static_qubit_system import StaticQubitSystem
+from qubit_system.utils import states
 
 
 class Geometry2D(BaseGeometry):
@@ -43,7 +43,7 @@ def plot_detuning_energy_levels(s_qs: StaticQubitSystem, crossings: np.ndarray, 
     )
     s_qs.get_energies()
 
-    g = states_quimb.get_ground_states(1)[0]
+    g = states.get_ground_states(1)[0]
     for i, state in enumerate(s_qs.states):
         is_highlight_state = any(state is s_qs.states[i] for i in highlighted_indices)
         is_ground_state = all((_state == g).all() for _state in state)
@@ -56,7 +56,7 @@ def plot_detuning_energy_levels(s_qs: StaticQubitSystem, crossings: np.ndarray, 
                 color=color,
                 alpha=0.6,
                 lw=linewidth, zorder=z_order,
-                label=states_quimb.get_label_from_state(state),
+                label=states.get_label_from_state(state),
                 picker=3)
 
     def on_pick(event):
@@ -98,7 +98,7 @@ def calculate_ghz_crossings(s_qs: StaticQubitSystem, other_highlighted_labels: L
     other_highlighted_indices = []
 
     for i, state in enumerate(s_qs.states):
-        label = states_quimb.get_label_from_state(state)
+        label = states.get_label_from_state(state)
         if label in other_highlighted_labels:
             other_highlighted_indices.append(i)
 
@@ -124,11 +124,15 @@ def calculate_ghz_crossings(s_qs: StaticQubitSystem, other_highlighted_labels: L
     crossings = np.array(crossings[1:])  # 1: removes first "crossing" of GGG (nan)
     unique_crossings, counts = np.unique(crossings, return_counts=True)
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 8))
+    # fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 8))
+    fig, ax1 = plt.subplots(1, 1, figsize=(15, 8))
     plot_detuning_energy_levels(s_qs, crossings, ax1, highlighted_indices=other_highlighted_indices + [-1])
+    plt.tight_layout()
+    # fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 8))
+    # plot_detuning_energy_levels(s_qs, crossings, ax1, highlighted_indices=other_highlighted_indices + [-1])
 
-    ax2.plot(unique_crossings, counts, 'x', alpha=0.4)
-    ax2.grid()
+    # ax2.plot(unique_crossings, counts, 'x', alpha=0.4)
+    # ax2.grid()
     plt.show()
     pass
 
@@ -150,7 +154,7 @@ if __name__ == '__main__':
         (RegularLattice2D((4, 2)), ['eggeegge']),
         (RegularLattice3D((2, 2, 2)), ['eggegeeg']),
     ]
-    i = 2
+    i = 0
     geometry = geometry_and_labels[i][0]
     s_qs = StaticQubitSystem(
         N=N, V=characteristic_V, geometry=geometry,

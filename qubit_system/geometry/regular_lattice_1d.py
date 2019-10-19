@@ -1,7 +1,7 @@
 from qubit_system.geometry.base_geometry import BaseGeometry
 import matplotlib.pyplot as plt
 
-from qubit_system.qubit_system_classes import plotting_decorator
+from qubit_system.qubit_systems.decorators import plotting_decorator
 
 
 class RegularLattice1D(BaseGeometry):
