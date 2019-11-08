@@ -3,7 +3,7 @@ from typing import Tuple, List
 import numpy as np
 import quimb as q
 from matplotlib import pyplot as plt, ticker
-from tqdm._tqdm_notebook import tqdm_notebook
+from tqdm._tqdm_notebook import tqdm_notebook as tqdm
 
 from qubit_system.geometry import BaseGeometry
 from qubit_system.qubit_systems.decorators import plotting_decorator

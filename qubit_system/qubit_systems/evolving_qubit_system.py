@@ -30,6 +30,13 @@ class EvolvingQubitSystem(BaseQubitSystem):
         self.Delta = Delta
         self.t_list = t_list
 
+        end_points = 100
+        self.Omega = np.concatenate([self.Omega, np.zeros(end_points)])
+        # self.Delta = np.concatenate([self.Delta, np.linspace(self.Delta[-1], 0, end_points)])
+        self.Delta = np.concatenate([self.Delta, np.ones(end_points) * self.Delta[-1]])
+        dt = self.t_list[1]
+        self.t_list = np.concatenate([self.t_list, np.arange(1, end_points + 1) * dt + self.t_list[-1]])
+
         assert len(t_list) - 1 == len(Omega) == len(Delta), \
             "Omega and Delta need to be of equal length, and of length one less than t_list"
 
@@ -81,6 +88,22 @@ class EvolvingQubitSystem(BaseQubitSystem):
             self.solved_t_list += (solve_points + latest_time).tolist()
             latest_state = state
             latest_time = self.solved_t_list[-1]
+
+        # Add some states for end-of-protocol.
+        # for i in range(10):
+        #     self.evo = q.Evolution(
+        #         latest_state,
+        #         self.get_hamiltonian(Omega=0, Delta=self.Delta[-1]),
+        #         # method="expm",
+        #         method="integrate",
+        #         # progbar=True,
+        #     )
+        #     solve_points = np.linspace(0, dt, self.solve_points_per_timestep + 1)[1:]  # Take away t=0 as a solve point
+        #     for state in self.evo.at_times(solve_points):
+        #         self.solved_states.append(state)
+        #     self.solved_t_list += (solve_points + latest_time).tolist()
+        #     latest_state = state
+        #     latest_time = self.solved_t_list[-1]
 
         return self.solved_states
 
@@ -147,16 +170,16 @@ class EvolvingQubitSystem(BaseQubitSystem):
                 self.solved_t_list,
                 [q.fidelity(_state, _instantaneous_state)
                  for _instantaneous_state in self.solved_states],
-                label=_label,
+                # label=_label,
                 lw=1,
                 alpha=0.8
             )
-        ax.set_ylabel("Fidelity")
+        ax.set_ylabel(r"GHZ Fidelity ${\left| \langle \mathrm{GHZ} | \psi_k (t) \rangle \right| }^2$")
         if plot_title:
             ax.set_title("Fidelity with GHZ states")
         ax.set_ylim((-0.1, 1.1))
         ax.yaxis.set_ticks([0, 0.5, 1])
-        ax.legend()
+        # ax.legend()
 
     def plot_basis_states_overlaps(self, ax, plot_title: bool = True, plot_others_as_sum: bool = False):
         states_list = states.get_states(self.N) if not plot_others_as_sum \
@@ -225,13 +248,14 @@ class EvolvingQubitSystem(BaseQubitSystem):
         subsystem_entropy = [q.entropy_subsys(state_, [2] * self.N, np.arange(self.N / 2))
                              for state_ in self.solved_states]
         label = r"$\mathcal{S}\, ( \rho_A )$"
-        ax.plot(self.solved_t_list, subsystem_entropy, label=label)
+        # ax.plot(self.solved_t_list, subsystem_entropy, label=label)
+        ax.plot(self.solved_t_list, subsystem_entropy)
 
         ax.set_ylabel(label)
         if plot_title:
             ax.set_title("Entanglement Entropy")
         ax.set_ylim((0, self.N / 2))
-        ax.legend()
+        # ax.legend()
 
     def get_fidelity_with(self, target_state: Union[str, q.qarray] = "ghz") -> float:
         """

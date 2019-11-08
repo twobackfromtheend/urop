@@ -62,6 +62,7 @@ class NoisyRegularLattice(BaseNoisyGeometry):
             plt.grid()
             plt.tight_layout()
         elif self.dimensions == 3:
+            from mpl_toolkits.mplot3d import Axes3D
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
@@ -74,7 +75,7 @@ class NoisyRegularLattice(BaseNoisyGeometry):
 
 
 if __name__ == '__main__':
-    lattice = NoisyRegularLattice(shape=(4, 2), spacing=1.5e-6, spacing_noise=5e-9)
+    lattice = NoisyRegularLattice(shape=(2, 2, 2), spacing=1.5e-6, spacing_noise=5e-9)
     print(lattice.coordinates)
 
     print(lattice.get_distance(0, 3))
