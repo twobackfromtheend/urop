@@ -55,12 +55,7 @@ def get_solved_episode(input_: np.ndarray,
     Delta_params = input_[timesteps:]
 
     _t_list = np.linspace(0, t_list[-1], interpolation_timesteps + 1)
-    interp = partial(interp1d,
-                     # kind="cubic",
-                     kind="quadratic",
-                     # kind="linear",
-                     # kind="previous",
-                     )
+    interp = partial(interp1d, kind="quadratic", )
 
     Omega_func: Callable[[float], float] = interp(t_list, np.hstack((Omega_params, Omega_params[-1])))
     Omega_shape_window = tukey(interpolation_timesteps + 1, alpha=0.2)
@@ -150,6 +145,7 @@ def optimise(f: Callable, domain: List[dict]):
         # initial_design_type='latin',
         # model_type="sparseGP",
         # batch_size=6,
+        num_cores=6,
         **bo_kwargs
     )
 
