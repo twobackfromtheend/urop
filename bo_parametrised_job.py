@@ -31,8 +31,10 @@ geometry_envvar = os.getenv("Q_GEOMETRY")
 geometry = eval(geometry_envvar)
 ghz_state_envvar = os.getenv("Q_GHZ_STATE")
 ghz_state = eval(ghz_state_envvar)
+
 repeats = int(os.getenv("REPEATS"))
-batch_size = int(os.getenv("BATCH_SIZE"))
+batch_size = int(os.getenv("BO_BATCH_SIZE"))
+max_iter = int(os.getenv("BO_MAX_ITER"))
 
 print(
     "Parameters:\n"
@@ -41,6 +43,8 @@ print(
     f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
     f"\tREPEATS: {repeats}\n"
+    f"\tBO_BATCH_SIZE: {batch_size}\n"
+    f"\tBO_MAX_ITER: {max_iter}\n"
 )
 
 trigger_event("job_progress", value1="Job started", value2=job_id)
@@ -147,7 +151,7 @@ def optimise(f: Callable, domain: List[dict]):
     )
 
     optimisation_kwargs = {
-        'max_iter': 50,
+        'max_iter': max_iter,
         # 'max_time': 300,
     }
     print(f"optimisation_kwargs: {optimisation_kwargs}")
