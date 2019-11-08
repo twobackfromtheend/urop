@@ -32,6 +32,7 @@ geometry = eval(geometry_envvar)
 ghz_state_envvar = os.getenv("Q_GHZ_STATE")
 ghz_state = eval(ghz_state_envvar)
 repeats = int(os.getenv("REPEATS"))
+batch_size = int(os.getenv("BATCH_SIZE"))
 
 print(
     "Parameters:\n"
@@ -133,7 +134,6 @@ def optimise(f: Callable, domain: List[dict]):
     bo_kwargs = {
         'domain': domain,  # box-constraints of the problem
         'acquisition_type': 'EI',  # Selects the Expected improvement
-        # 'initial_design_numdata': 4,  # Number of initial points
         'initial_design_numdata': 4 * len(domain),  # Number of initial points
         'exact_feval': True
     }
@@ -141,11 +141,8 @@ def optimise(f: Callable, domain: List[dict]):
 
     bo = BayesianOptimization(
         f=f,
-        # maximise=True,
-        # initial_design_type='latin',
-        # model_type="sparseGP",
-        # batch_size=6,
-        num_cores=6,
+        batch_size=batch_size,
+        num_cores=batch_size,
         **bo_kwargs
     )
 
