@@ -8,6 +8,6 @@ N = int(os.getenv("N"))
 
 trigger_event("job_progress", value1=f"Hamiltonian generation for N={N} started", value2=job_id)
 
-SpinHamiltonian.create_and_save_hamiltonian(8)
+SpinHamiltonian.create_and_save_hamiltonian(N)
 
 trigger_event("job_progress", value1=f"Hamiltonian generation completed", value2=job_id)
