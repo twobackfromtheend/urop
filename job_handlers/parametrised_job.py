@@ -29,14 +29,15 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 LOCAL_JOB_ENVVARS = {
     'PBS_JOBID': 'LOCAL_JOB',
     'N': '8',
-    'Q_GEOMETRY': 'NoisyRegularLattice(shape=(4, 2), spacing=LATTICE_SPACING, spacing_noise=0e-9)',
-    'Q_GHZ_STATE': 'CustomGHZState(N, [True, True, True, True, True, True, True, True])',
-    'REPEATS': '1',
-    'BO_BATCH_SIZE': '3',
+    'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
+    'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
+    'BO_BATCH_SIZE': '1',
     'BO_MAX_ITER': '50',
+    'BO_EXPLOIT_ITER': '10',
 }
 
-IS_LOCAL_JOB = bool(os.getenv("PBS_JOBID"))
+IS_LOCAL_JOB = not bool(os.getenv("PBS_JOBID"))
+print(f"IS_LOCAL_JOB: {IS_LOCAL_JOB}")
 
 
 def getenv(key: str):
@@ -55,6 +56,7 @@ ghz_state = eval(ghz_state_envvar)
 
 batch_size = int(getenv("BO_BATCH_SIZE"))
 max_iter = int(getenv("BO_MAX_ITER"))
+exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
 
 print(
     "Parameters:\n"
@@ -71,6 +73,8 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
           t_list: np.ndarray, psi_0: QType,
           ghz_state: BaseGHZState,
           protocol_generator: BaseProtocolGenerator):
+    ghz_state_tensor = ghz_state.get_state_tensor()
+
     def f(inputs: np.ndarray) -> np.ndarray:
         """
         :param inputs: 2-dimensional array
@@ -85,12 +89,12 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
                 spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
                 Omega=Omega, Delta=Delta
             )
-            ghz_fidelity = q.fidelity(final_state, ghz_state.get_state_tensor())
-            print(f"fidelity: {ghz_fidelity:.3f} (for protocol Omega: {Omega}, Delta: {Delta})")
+            ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
+            print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
             return 1 - ghz_fidelity
 
         output = np.array([get_figure_of_merit(input_) for input_ in inputs])
-        print(f"func f completed in {time.time() - start_time:.3f}, output: {output}")
+        print(f"func f completed in {time.time() - start_time:.3f}s, output: {output}")
         return output
 
     return f
@@ -148,15 +152,29 @@ def optimise(f: Callable, domain: List[dict]):
 
     print(f"Optimised result: {bo.fx_opt}")
     print(f"Optimised controls: {bo.x_opt}")
+
+    # Exploit
+    bo.acquisition_type = 'LCB'
+    bo.acquisition_weight = 1e-6
+    bo.kwargs['acquisition_weight'] = 1e-6
+
+    bo.acquisition = bo._acquisition_chooser()
+    bo.evaluator = bo._evaluator_chooser()
+
+    bo.run_optimization(exploit_iter)
+
+    print(f"Optimised result: {bo.fx_opt}")
+    print(f"Optimised controls: {bo.x_opt}")
     return bo
 
 
 if __name__ == '__main__':
     trigger_event("job_progress", value1="Job started", value2=job_id)
 
-    timesteps = 3
+    protocol_timesteps = 3
     t = 2e-6
-    t_list = np.linspace(0, t, timesteps + 1)
+    interpolation_timesteps = 3000
+    t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
     spin_ham = SpinHamiltonian.load(N)
 
@@ -167,7 +185,7 @@ if __name__ == '__main__':
     )
     Omega_limits = (0, crossing)
     Delta_limits = (0.5 * crossing, 1.5 * crossing)
-    domain = get_domain(Omega_limits, Delta_limits, timesteps)
+    domain = get_domain(Omega_limits, Delta_limits, protocol_timesteps)
 
     protocol_generator = InterpolationPG(t_list, kind="cubic")
 
