@@ -66,6 +66,7 @@ print(
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
     f"\tBO_BATCH_SIZE: {batch_size}\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
+    f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
 )
 
 
