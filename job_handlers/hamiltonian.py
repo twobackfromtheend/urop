@@ -10,7 +10,8 @@ from qubit_system.geometry import BaseGeometry
 
 QType = csr_matrix
 
-HAMILTONIANS_DIR = Path(__file__).parent / "hamiltonians"
+HAMILTONIANS_DIR: Path = Path(__file__).parent / "hamiltonians"
+HAMILTONIANS_DIR.mkdir(exist_ok=True)
 
 
 @dataclass
