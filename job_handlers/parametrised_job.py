@@ -1,6 +1,5 @@
 import os
 import time
-from functools import partial
 from typing import Callable, List, Tuple
 
 import numpy as np
@@ -37,9 +36,14 @@ LOCAL_JOB_ENVVARS = {
     'BO_MAX_ITER': '50',
 }
 
+IS_LOCAL_JOB = bool(os.getenv("PBS_JOBID"))
+
 
 def getenv(key: str):
-    return os.getenv(key, default=LOCAL_JOB_ENVVARS.get(key))
+    if not IS_LOCAL_JOB:
+        return os.getenv(key)
+    else:
+        return LOCAL_JOB_ENVVARS[key]
 
 
 job_id = getenv("PBS_JOBID")
