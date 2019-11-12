@@ -109,8 +109,8 @@ class SpinHamiltonian:
         return spin_ham
 
     def get_hamiltonian(self, V: float, geometry: BaseGeometry, Omega: float, Delta: float) -> QType:
-        # noinspection PyTypeChecker
         if self.time_independent_terms_sum is None:
+            # noinspection PyTypeChecker
             self.time_independent_terms_sum: QType = 0
             for i, j, n_ij in self.time_independent_terms:
                 self.time_independent_terms_sum += V / geometry.get_distance(i, j) ** 6 * n_ij

@@ -10,6 +10,7 @@ import interaction_constants
 from ifttt_webhook import trigger_event
 from job_handlers.hamiltonian import SpinHamiltonian, QType
 from job_handlers.solver import solve_with_protocol
+from job_handlers.timer import timer
 from job_handlers.utils import get_crossing
 from protocol_generator.base_protocol_generator import BaseProtocolGenerator
 from protocol_generator.interpolation_pg import InterpolationPG
@@ -177,29 +178,34 @@ if __name__ == '__main__':
     interpolation_timesteps = 3000
     t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
-    spin_ham = SpinHamiltonian.load(N)
+    with timer(f"Loading SpinHam (N={N})"):
+        spin_ham = SpinHamiltonian.load(N)
 
-    crossing = get_crossing(
-        spin_ham=spin_ham, characteristic_V=characteristic_V,
-        ghz_state=ghz_state, geometry=geometry,
-        V=C6
-    )
+    with timer(f"Calculating crossing"):
+        crossing = get_crossing(
+            spin_ham=spin_ham, characteristic_V=characteristic_V,
+            ghz_state=ghz_state, geometry=geometry,
+            V=C6
+        )
     Omega_limits = (0, crossing)
     Delta_limits = (0.5 * crossing, 1.5 * crossing)
     domain = get_domain(Omega_limits, Delta_limits, protocol_timesteps)
 
     protocol_generator = InterpolationPG(t_list, kind="cubic")
 
-    f = get_f(
-        spin_ham=spin_ham,
-        V=C6,
-        geometry=geometry,
-        t_list=t_list,
-        psi_0=q.kron(*states.get_ground_states(N)),
-        ghz_state=ghz_state,
-        protocol_generator=protocol_generator,
-    )
-    bo = optimise(f, domain)
+    with timer(f"Getting f"):
+        f = get_f(
+            spin_ham=spin_ham,
+            V=C6,
+            geometry=geometry,
+            t_list=t_list,
+            psi_0=q.kron(*states.get_ground_states(N)),
+            ghz_state=ghz_state,
+            protocol_generator=protocol_generator,
+        )
+
+    with timer(f"Optimising f"):
+        bo = optimise(f, domain)
 
     print("x_opt", bo.x_opt)
     print("fx_opt", bo.fx_opt)
