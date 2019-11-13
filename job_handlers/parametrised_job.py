@@ -1,10 +1,13 @@
+print("Importing modules 1...")
 import os
 import time
 from typing import Callable, List, Tuple
+print("Importing modules 2...")
 
 import numpy as np
 import quimb as q
 from GPyOpt.methods import BayesianOptimization
+print("Importing modules 3...")
 
 import interaction_constants
 from ifttt_webhook import trigger_event
@@ -29,9 +32,12 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 
 LOCAL_JOB_ENVVARS = {
     'PBS_JOBID': 'LOCAL_JOB',
-    'N': '8',
-    'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
-    'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
+    # 'N': '8',
+    # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
+    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
+    'N': '20',
+    'Q_GEOMETRY': 'RegularLattice2D(shape=(4, 5), spacing=LATTICE_SPACING)',
+    'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False])',
     'BO_BATCH_SIZE': '1',
     'BO_MAX_ITER': '50',
     'BO_EXPLOIT_ITER': '10',
