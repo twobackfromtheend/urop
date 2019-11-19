@@ -52,9 +52,10 @@ print(f"IS_LOCAL_JOB: {IS_LOCAL_JOB}")
 
 def getenv(key: str):
     if not IS_LOCAL_JOB:
-        try:
-            return os.getenv(key)
-        except:
+        os_env = os.getenv(key)
+        if os_env is not None:
+            return os_env
+        else:
             print(f"Could not get envvar {key}, using {LOCAL_JOB_ENVVARS[key]}")
             return LOCAL_JOB_ENVVARS[key]
     else:
