@@ -14,7 +14,7 @@ from ifttt_webhook import trigger_event
 from job_handlers.hamiltonian import SpinHamiltonian, QType
 from job_handlers.solver import solve_with_protocol
 from job_handlers.timer import timer
-from job_handlers.utils import get_crossing
+from job_handlers.crossing import get_ghz_crossing
 from protocol_generator.base_protocol_generator import BaseProtocolGenerator
 from protocol_generator.interpolation_pg import InterpolationPG
 from qubit_system.geometry import *
@@ -35,13 +35,6 @@ LOCAL_JOB_ENVVARS = {
     'N': '8',
     'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
     'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
-    # 'N': '8',
-    # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
-    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
-    # 'N': '20',
-    # 'Q_GEOMETRY': 'RegularLattice2D(shape=(4, 5), spacing=LATTICE_SPACING)',
-    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False])',
-    'BO_BATCH_SIZE': '1',
     'BO_MAX_ITER': '50',
     'BO_EXPLOIT_ITER': '10',
 }
@@ -52,7 +45,12 @@ print(f"IS_LOCAL_JOB: {IS_LOCAL_JOB}")
 
 def getenv(key: str):
     if not IS_LOCAL_JOB:
-        return os.getenv(key)
+        os_env = os.getenv(key)
+        if os_env is not None:
+            return os_env
+        else:
+            print(f"Could not get envvar {key}, using {LOCAL_JOB_ENVVARS[key]}")
+            return LOCAL_JOB_ENVVARS[key]
     else:
         return LOCAL_JOB_ENVVARS[key]
 
@@ -64,7 +62,6 @@ geometry = eval(geometry_envvar)
 ghz_state_envvar = getenv("Q_GHZ_STATE")
 ghz_state = eval(ghz_state_envvar)
 
-batch_size = int(getenv("BO_BATCH_SIZE_ANOTHER_NAME"))
 max_iter = int(getenv("BO_MAX_ITER"))
 exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
 
@@ -74,7 +71,6 @@ print(
     f"\tN: {N}\n"
     f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
-    f"\tBO_BATCH_SIZE: {batch_size}\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
 )
@@ -149,8 +145,6 @@ def optimise(f: Callable, domain: List[dict]):
 
     bo = BayesianOptimization(
         f=f,
-        batch_size=batch_size,
-        num_cores=batch_size,
         **bo_kwargs
     )
 
@@ -191,7 +185,7 @@ if __name__ == '__main__':
         spin_ham = SpinHamiltonian.load(N)
 
     with timer(f"Calculating crossing"):
-        crossing = get_crossing(
+        crossing = get_ghz_crossing(
             spin_ham=spin_ham, characteristic_V=characteristic_V,
             ghz_state=ghz_state, geometry=geometry,
             V=C6
