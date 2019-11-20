@@ -1,13 +1,13 @@
-print("Importing modules 1...")
+print("Importing modules 1...", flush=True)
 import os
 import time
 from typing import Callable, List, Tuple
-print("Importing modules 2...")
+print("Importing modules 2...", flush=True)
 
 import numpy as np
 import quimb as q
 from GPyOpt.methods import BayesianOptimization
-print("Importing modules 3...")
+print("Importing modules 3...", flush=True)
 
 import interaction_constants
 from ifttt_webhook import trigger_event
