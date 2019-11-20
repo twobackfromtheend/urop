@@ -1,4 +1,3 @@
-from functools import partial
 
 print("Importing modules 1...", flush=True)
 import os
@@ -24,6 +23,7 @@ from qubit_system.utils import states
 from qubit_system.utils.ghz_states import *
 
 # Flush prints immediately.
+from functools import partial
 print = partial(print, flush=True)
 
 
