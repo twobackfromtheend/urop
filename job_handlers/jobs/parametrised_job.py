@@ -1,3 +1,5 @@
+from functools import partial
+
 print("Importing modules 1...", flush=True)
 import os
 import time
@@ -20,6 +22,10 @@ from protocol_generator.interpolation_pg import InterpolationPG
 from qubit_system.geometry import *
 from qubit_system.utils import states
 from qubit_system.utils.ghz_states import *
+
+# Flush prints immediately.
+print = partial(print, flush=True)
+
 
 N_RYD = 50
 C6 = interaction_constants.get_C6(N_RYD)
