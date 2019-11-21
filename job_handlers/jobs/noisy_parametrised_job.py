@@ -12,8 +12,7 @@ from job_handlers.hamiltonian import SpinHamiltonian, QType
 from job_handlers.jobs.bo_utils import get_domain, optimise
 from job_handlers.solver import solve_with_protocol
 from job_handlers.timer import timer
-from protocol_generator.base_protocol_generator import BaseProtocolGenerator
-from protocol_generator.interpolation_pg import InterpolationPG
+from protocol_generator.noisy_interpolation_pg import NoisyInterpolationPG
 from qubit_system.geometry import *
 from qubit_system.utils import states
 from qubit_system.utils.ghz_states import *
@@ -33,7 +32,7 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 LOCAL_JOB_ENVVARS = {
     'PBS_JOBID': 'LOCAL_JOB',
     'N': '8',
-    'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
+    'Q_GEOMETRY': 'NoisyRegularLattice(shape=(4, 2), spacing=LATTICE_SPACING, spacing_noise=0.1e-6)',
     'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
     # 'N': '8',
     # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
@@ -41,6 +40,12 @@ LOCAL_JOB_ENVVARS = {
     # 'N': '20',
     # 'Q_GEOMETRY': 'RegularLattice2D(shape=(4, 5), spacing=LATTICE_SPACING)',
     # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False])',
+
+    'Q_F_NOISE': 0.01,
+    'Q_PROTOCOL_NOISE': 0.01,
+
+    'ITERS_PER_PARAM': 1,
+
     'BO_MAX_ITER': '50',
     'BO_EXPLOIT_ITER': '10',
 }
@@ -65,8 +70,14 @@ job_id = getenv("PBS_JOBID")
 N = int(getenv("N"))
 geometry_envvar = getenv("Q_GEOMETRY")
 geometry = eval(geometry_envvar)
+
 ghz_state_envvar = getenv("Q_GHZ_STATE")
 ghz_state = eval(ghz_state_envvar)
+
+f_noise = float(getenv("Q_F_NOISE"))
+protocol_noise = float(getenv("Q_PROTOCOL_NOISE"))
+
+iters_per_param = int(getenv("ITERS_PER_PARAM"))
 
 max_iter = int(getenv("BO_MAX_ITER"))
 exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
@@ -75,17 +86,24 @@ print(
     "Parameters:\n"
     f"\tjob_id: {job_id}\n"
     f"\tN: {N}\n"
-    f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
+    f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
+
+    f"\tQ_F_NOISE: {f_noise}\n"
+    f"\tQ_PROTOCOL_NOISE: {protocol_noise}\n"
+
+    f"\tITERS_PER_PARAM: {iters_per_param}\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
 )
 
+assert isinstance(geometry, BaseNoisyGeometry), "Geometry must be subclass of BaseNoisyGeometry"
 
-def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
+
+def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseNoisyGeometry,
           t_list: np.ndarray, psi_0: QType,
           ghz_state: BaseGHZState,
-          protocol_generator: BaseProtocolGenerator):
+          protocol_generator: NoisyInterpolationPG):
     ghz_state_tensor = ghz_state.get_state_tensor()
 
     def f(inputs: np.ndarray) -> np.ndarray:
@@ -97,14 +115,23 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
         start_time = time.time()
 
         def get_figure_of_merit(input_: np.ndarray):
-            Omega, Delta = protocol_generator.get_protocol(input_)
-            final_state = solve_with_protocol(
-                spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
-                Omega=Omega, Delta=Delta
-            )[-1]
-            ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
-            print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
-            return 1 - ghz_fidelity
+            ghz_fidelities = []
+            for i in range(iters_per_param):
+                geometry.reset_coordinates()
+                Omega, Delta = protocol_generator.get_protocol(input_)
+                final_state = solve_with_protocol(
+                    spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
+                    Omega=Omega, Delta=Delta
+                )[-1]
+                ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
+                print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
+                ghz_fidelities.append(ghz_fidelity)
+
+            ghz_fidelities = np.array(ghz_fidelities)
+            noisy_ghz_fidelities = ghz_fidelities + np.random.normal(
+                size=ghz_fidelities.shape) * ghz_fidelities * f_noise
+            mean_ghz_fidelity = np.mean(noisy_ghz_fidelities)
+            return 1 - mean_ghz_fidelity
 
         output = np.array([get_figure_of_merit(input_) for input_ in inputs])
         print(f"func f completed in {time.time() - start_time:.3f}s, output: {output}")
@@ -134,7 +161,7 @@ if __name__ == '__main__':
     Delta_limits = (0.5 * crossing, 1.5 * crossing)
     domain = get_domain(Omega_limits, Delta_limits, protocol_timesteps)
 
-    protocol_generator = InterpolationPG(t_list, kind="cubic")
+    protocol_generator = NoisyInterpolationPG(t_list, kind="quadratic", noise=protocol_noise)
 
     with timer(f"Getting f"):
         f = get_f(
