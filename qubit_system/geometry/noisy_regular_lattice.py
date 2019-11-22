@@ -19,7 +19,7 @@ class NoisyRegularLattice(BaseNoisyGeometry):
         self.base_coordinates = self._get_base_coordinates()
         self.coordinates = self._generate_coordinates()
 
-    def get_distance(self, i: int, j: int, with_noise: bool = False) -> float:
+    def get_distance(self, i: int, j: int, with_noise: bool = True) -> float:
         if with_noise:
             return ((self.coordinates[j] - self.coordinates[i]) ** 2).sum() ** 0.5
         else:
