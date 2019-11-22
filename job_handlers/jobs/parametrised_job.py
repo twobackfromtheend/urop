@@ -1,3 +1,4 @@
+import gc
 import os
 import time
 from functools import partial
@@ -108,6 +109,7 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
 
         output = np.array([get_figure_of_merit(input_) for input_ in inputs])
         print(f"func f completed in {time.time() - start_time:.3f}s, output: {output}")
+        gc.collect()
         return output
 
     return f
