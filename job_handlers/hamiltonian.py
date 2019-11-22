@@ -117,6 +117,9 @@ class SpinHamiltonian:
 
         return self.time_independent_terms_sum + Omega * self.Omega_coeff_terms + Delta * self.Delta_coeff_terms
 
+    def reset_geometry(self):
+        self.time_independent_terms_sum = None
+
 
 if __name__ == '__main__':
     # SpinHamiltonian.create_and_save_hamiltonian(8)

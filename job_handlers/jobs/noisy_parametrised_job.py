@@ -117,7 +117,10 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseNoisyGeometry,
         def get_figure_of_merit(input_: np.ndarray):
             ghz_fidelities = []
             for i in range(iters_per_param):
+                # Reset geometry and generate new Hamiltonian (time-independent terms need to be resummed)
                 geometry.reset_coordinates()
+                spin_ham.reset_geometry()
+
                 Omega, Delta = protocol_generator.get_protocol(input_)
                 final_state = solve_with_protocol(
                     spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
