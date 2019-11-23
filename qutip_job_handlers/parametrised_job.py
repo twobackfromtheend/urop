@@ -1,3 +1,4 @@
+import gc
 import os
 import time
 from functools import partial
@@ -102,7 +103,6 @@ def get_f(spin_ham: QutipSpinHamiltonian, V: float, geometry: BaseGeometry,
 
             Omega_func: Callable[[float], float] = interp1d(input_t_list, np.hstack((Omega_params, Omega_params[-1])),
                                                             kind="quadratic", bounds_error=False, fill_value=0)
-            timesteps = len(t_list)
             window_fn = tukey(timesteps, alpha=0.2)
 
             def Omega(x: float, *args) -> float:
@@ -123,6 +123,7 @@ def get_f(spin_ham: QutipSpinHamiltonian, V: float, geometry: BaseGeometry,
 
         output = np.array([get_figure_of_merit(input_) for input_ in inputs])
         print(f"func f completed in {time.time() - start_time:.3f}s, output: {output}")
+        gc.collect()
         return output
 
     return f
