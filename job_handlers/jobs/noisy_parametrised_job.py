@@ -126,7 +126,7 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseNoisyGeometry,
                 final_state = solve_with_protocol(
                     spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
                     Omega=Omega, Delta=Delta
-                )[-1]
+                )
                 ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
                 print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
                 ghz_fidelities.append(ghz_fidelity)

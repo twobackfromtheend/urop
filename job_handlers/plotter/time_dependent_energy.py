@@ -115,10 +115,11 @@ if __name__ == '__main__':
                 spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
                 Omega=Omega, Delta=Delta
             )
+            # TODO: Fix, now only returns final state.
 
         plt.figure(figsize=(10, 7))
         plot_time_dependent_eigenenergies(spin_ham,
                                           V=V, geometry=geometry, t_list=t_list, Omega=Omega, Delta=Delta,
                                           states=states,
                                           ghz_state=ghz_state)
-        plt.savefig(f"time_dependent_eigenenergies_{D}_{GHZ}_gap_limited_coloured_ghz.png", dpi=300)
+        plt.savefig(f"plots/time_dependent_eigenenergies_{D}_{GHZ}_gap_limited_coloured_ghz.png", dpi=300)
