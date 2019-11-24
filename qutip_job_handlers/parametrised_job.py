@@ -5,7 +5,7 @@ from functools import partial
 from typing import Callable
 
 import numpy as np
-from qutip import Qobj, fidelity, tensor, basis
+from qutip import Qobj, fidelity, tensor, basis, Options
 from scipy.interpolate import interp1d
 
 import interaction_constants
@@ -41,6 +41,9 @@ LOCAL_JOB_ENVVARS = {
     'BO_MAX_ITER': '50',
     'BO_EXPLOIT_ITER': '10',
 }
+
+qutip_options = Options()
+print(qutip_options)
 
 IS_LOCAL_JOB = not bool(os.getenv("PBS_JOBID"))
 print(f"IS_LOCAL_JOB: {IS_LOCAL_JOB}")
