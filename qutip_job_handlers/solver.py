@@ -4,9 +4,10 @@ from qutip import Options, Qobj, sesolve
 
 options_kwargs = {
     "num_cpus": os.getenv("NCPUS", 0),
+    "store_states": False,
     "store_final_state": True,
     "nsteps": 5000,
-    "use_openmp": True,
+    "use_openmp": True if os.getenv("OMP_NUM_THREADS", None) else False,
     "openmp_threads": os.getenv("OMP_NUM_THREADS", None)
 }
 
@@ -23,5 +24,5 @@ def solve(hamiltonian: list, psi_0: Qobj, t_list: np.ndarray):
         hamiltonian,
         psi_0,
         t_list,
-        options=Options(store_states=True, nsteps=5000),
+        options=qutip_options,
     )

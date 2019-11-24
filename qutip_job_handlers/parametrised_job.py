@@ -5,7 +5,7 @@ from functools import partial
 from typing import Callable
 
 import numpy as np
-from qutip import Qobj, fidelity, tensor, basis, Options
+from qutip import Qobj, fidelity, tensor, basis
 from scipy.interpolate import interp1d
 
 import interaction_constants
@@ -116,8 +116,8 @@ def get_f(spin_ham: QutipSpinHamiltonian, V: float, geometry: BaseGeometry,
                 return Delta_func(x)
 
             hamiltonian = spin_ham.get_hamiltonian(V, geometry, Omega, Delta)
-
-            final_state = solve(hamiltonian, psi_0, t_list).states[-1]
+            solve_result = solve(hamiltonian, psi_0, t_list)
+            final_state = solve_result.final_state
             ghz_fidelity = fidelity(final_state, ghz_state_tensor) ** 2
             print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
             return 1 - ghz_fidelity
