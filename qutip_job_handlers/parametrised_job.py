@@ -42,8 +42,6 @@ LOCAL_JOB_ENVVARS = {
     'BO_EXPLOIT_ITER': '10',
 }
 
-qutip_options = Options()
-print(qutip_options)
 
 IS_LOCAL_JOB = not bool(os.getenv("PBS_JOBID"))
 print(f"IS_LOCAL_JOB: {IS_LOCAL_JOB}")
