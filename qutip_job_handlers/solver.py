@@ -6,7 +6,8 @@ options_kwargs = {
     "num_cpus": os.getenv("NCPUS", 0),
     "store_final_state": True,
     "nsteps": 5000,
-    "use_openmp": True
+    "use_openmp": True,
+    "openmp_threads": os.getenv("OMP_NUM_THREADS", None)
 }
 
 print(f"options kwargs: {options_kwargs}")
