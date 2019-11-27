@@ -34,15 +34,18 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 LOCAL_JOB_ENVVARS = {
     'PBS_JOBID': 'LOCAL_JOB',
     'N': '8',
-    'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
-    'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
+    'Q_GEOMETRY': 'RegularLattice(shape=(8,), spacing=LATTICE_SPACING)',
+    'Q_GHZ_STATE': 'CustomGHZState(N, [True, True, True, True, True, True, True, True])',
+
+    # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
+    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
     # 'N': '8',
     # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
     # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
     # 'N': '20',
     # 'Q_GEOMETRY': 'RegularLattice2D(shape=(4, 5), spacing=LATTICE_SPACING)',
     # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False, True, False])',
-    'BO_MAX_ITER': '50',
+    'BO_MAX_ITER': '300',
     'BO_EXPLOIT_ITER': '10',
 }
 
@@ -119,7 +122,7 @@ if __name__ == '__main__':
     trigger_event("job_progress", value1="Job started", value2=job_id)
 
     protocol_timesteps = 3
-    t = 2e-6
+    t = 1e-6
     interpolation_timesteps = 3000
     t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
