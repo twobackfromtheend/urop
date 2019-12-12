@@ -1,3 +1,6 @@
+from itertools import combinations
+from typing import List
+
 from qutip import *
 
 
@@ -27,3 +30,56 @@ def get_exp_list(N: int):
 
     exp_list = [sx_list, sy_list, sz_list]
     return exp_list
+
+
+def get_ground_states(N: int) -> List[Qobj]:
+    return [basis(2, 1) for _ in range(N)]
+
+
+def get_excited_states(N: int) -> List[Qobj]:
+    return [basis(2, 0) for _ in range(N)]
+
+
+def get_states(N: int) -> List[List[Qobj]]:
+    """
+    Returns all basis states.
+    E.g. for L = 2, returns
+        [
+            [g, g],
+            [e, g],
+            [g, e],
+            [e, e]
+        ]
+    where 'g' and 'e' correspond to Qobj's basis(2, 1) and basis(2, 0) respectively
+
+    :param N: number of qubits
+    :return:
+    """
+    states = []
+
+    for number_excited in range(N + 1):
+        for excited_indices in combinations(range(N), number_excited):
+            qubits = []
+            for i in range(N):
+                _is_excited = int(i not in excited_indices)
+                qubits.append(basis(2, _is_excited))
+
+            states.append(qubits)
+
+    return states
+
+
+def is_excited(state: Qobj):
+    return expect(sigmaz(), state) == 1
+
+
+def get_label_from_state(_state: List[Qobj]) -> str:
+    return "".join(["e" if is_excited(spin) else "g" for spin in _state])
+
+
+def get_product_basis_states_index(state: List[Qobj]) -> int:
+    return tensor(state).data.toarray().argmax()
+
+
+__all__ = ['get_exp_list', 'get_ground_states', 'get_excited_states', 'get_states', 'is_excited',
+           'get_label_from_state', 'get_product_basis_states_index']

@@ -24,16 +24,16 @@ if __name__ == '__main__':
     from scipy.signal.windows import tukey as scipytukey
     import matplotlib.pyplot as plt
 
-    timesteps = 500
+    timesteps = 501
     alpha = 0.2
     scipy_window = scipytukey(timesteps, alpha=alpha)
 
     x = np.arange(timesteps)
-    plt.plot(x, scipy_window, alpha=0.5)
+    plt.plot(x / 100, scipy_window, alpha=0.5)
 
     window_fn = tukey(timesteps, alpha=alpha)
     window_fn_array = [window_fn(_x) for _x in x]
-    plt.plot(x, window_fn_array, '--', alpha=0.5)
+    plt.plot(x / 100, window_fn_array, '--', alpha=0.5)
 
     print(np.isclose(window_fn_array, scipy_window).all())
     plt.show()

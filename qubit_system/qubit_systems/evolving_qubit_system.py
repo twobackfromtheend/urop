@@ -30,7 +30,7 @@ class EvolvingQubitSystem(BaseQubitSystem):
         self.Delta = Delta
         self.t_list = t_list
 
-        end_points = 100
+        end_points = 0
         self.Omega = np.concatenate([self.Omega, np.zeros(end_points)])
         # self.Delta = np.concatenate([self.Delta, np.linspace(self.Delta[-1], 0, end_points)])
         self.Delta = np.concatenate([self.Delta, np.ones(end_points) * self.Delta[-1]])
@@ -192,8 +192,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
         for i, state in enumerate(states_list):
             label = states.get_label_from_state(state)
             state_product_basis_index = states.get_product_basis_states_index(state)
-            state_fidelities = [np.abs(_instantaneous_state.flatten()[state_product_basis_index]) ** 2
-                                for _instantaneous_state in self.solved_states]
+            state_fidelities = np.array([np.abs(_instantaneous_state.flatten()[state_product_basis_index]) ** 2
+                                for _instantaneous_state in self.solved_states])
 
             if 'e' not in label or 'g' not in label:
                 fidelities.append(state_fidelities)
@@ -211,6 +211,8 @@ class EvolvingQubitSystem(BaseQubitSystem):
                 else:
                     plotted_others = True
 
+            if (state_fidelities> 0.45).any():
+                print(label, max(state_fidelities))
             ax.plot(
                 self.solved_t_list,
                 state_fidelities,

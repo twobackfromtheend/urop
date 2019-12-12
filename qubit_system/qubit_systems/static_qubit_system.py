@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import numpy as np
 import quimb as q
@@ -53,12 +53,13 @@ class StaticQubitSystem(BaseQubitSystem):
 
     @plotting_decorator
     def plot_detuning_energy_levels(self, plot_state_names: bool, fig_kwargs: dict = None, plot_title: bool = True,
-                                    ylim: Tuple[float, float] = None, highlight_states_by_label: List[str] = None):
+                                    ylim: Tuple[float, float] = None,
+                                    highlight_states_by_label: Dict[str, str] = None):
         if self.Omega_zero_energies is None:
             self.get_energies()
 
         if highlight_states_by_label is None:
-            highlight_states_by_label = ''.join(['e' for _ in range(self.N)])
+            highlight_states_by_label = {''.join(['e' for _ in range(self.N)]): 'r'}
 
         if fig_kwargs is None:
             fig_kwargs = {}
@@ -69,9 +70,10 @@ class StaticQubitSystem(BaseQubitSystem):
         plot_points = len(self.Delta)
         for i in reversed(range(len(self.states))):
             label = states.get_label_from_state(self.states[i])
+
             is_highlight_state = label in highlight_states_by_label
             is_ground_state = 'e' not in label
-            color = 'g' if is_ground_state else 'r' if is_highlight_state else 'grey'
+            color = 'g' if is_ground_state else highlight_states_by_label[label] if is_highlight_state else 'grey'
             linewidth = 5 if is_ground_state or is_highlight_state else 1
             z_order = 2 if is_ground_state or is_highlight_state else 1
             # color = f'C{i}'
