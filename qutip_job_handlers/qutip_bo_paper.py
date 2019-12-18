@@ -71,6 +71,9 @@ LOCAL_JOB_ENVVARS = {
 
     'BO_MAX_ITER': '60',
     'BO_EXPLOIT_ITER': '0',
+    'NUMBER_OF_EXCITED_WANTED': '5',
+    'REPEATS_PER_ITER': '5',
+    'initial_design_numdata_factor': '4',
 }
 
 
@@ -95,6 +98,9 @@ ghz_state = eval(ghz_state_envvar)
 
 max_iter = int(getenv("BO_MAX_ITER"))
 exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
+REPEATS_PER_ITER = int(getenv("BO_REPEATS_PER_ITER"))
+NUMBER_OF_EXCITED_WANTED = int(getenv("NUMBER_OF_EXCITED_WANTED"))
+initial_design_numdata_factor = int(getenv("initial_design_numdata_factor"))
 
 print(
     "Parameters:\n"
@@ -104,6 +110,9 @@ print(
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
+    f"\tREPEATS_PER_ITER: {REPEATS_PER_ITER}\n"
+    f"\tNUMBER_OF_EXCITED_WANTED: {NUMBER_OF_EXCITED_WANTED}\n"
+    f"\tinitial_design_numdata_factor: {initial_design_numdata_factor}\n"
 )
 
 
@@ -161,12 +170,11 @@ def get_f(spin_ham: QutipSpinHamiltonian, V: float, geometry: BaseGeometry,
             state_excited_count = sum(letter == "e" for letter in state_label)
             state_tensors_by_excited_count[state_excited_count].append(tensor(*state))
 
-        NUMBER_OF_EXCITED_WANTED = 10
         figure_of_merit_kets = state_tensors_by_excited_count[NUMBER_OF_EXCITED_WANTED]
 
         def get_figure_of_merit(input_: np.ndarray):
             figure_of_merit_over_repeats = []
-            for i in range(5):
+            for i in range(REPEATS_PER_ITER):
                 Omega, Delta = get_protocol_from_input(input_, t_list)
 
                 hamiltonian = spin_ham.get_hamiltonian(V, geometry, Omega, Delta, filling_fraction=0.9)
@@ -227,7 +235,8 @@ if __name__ == '__main__':
         crossing = get_ghz_crossing(
             spin_ham=spin_ham, characteristic_V=characteristic_V,
             ghz_state=ghz_state, geometry=geometry,
-            V=C6)
+            V=C6
+        )
     Omega_limits = (0, crossing)
     Delta_limits = (-crossing, 1.5 * crossing)
 
@@ -246,7 +255,7 @@ if __name__ == '__main__':
         )
 
     with timer(f"Optimising f"):
-        bo = optimise(f, domain, max_iter=max_iter, exploit_iter=exploit_iter)
+        bo = optimise(f, domain, max_iter=max_iter, exploit_iter=exploit_iter, initial_design_numdata_factor=initial_design_numdata_factor)
 
     print("x_opt", bo.x_opt)
     print("fx_opt", bo.fx_opt)
