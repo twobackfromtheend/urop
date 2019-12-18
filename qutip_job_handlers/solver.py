@@ -7,7 +7,7 @@ options_kwargs = {
     "store_states": False,
     "store_final_state": True,
     "nsteps": 5000,
-    "use_openmp": True if os.getenv("OMP_NUM_THREADS", None) else False,
+    # "use_openmp": True if os.getenv("OMP_NUM_THREADS", None) else False,
     "openmp_threads": os.getenv("OMP_NUM_THREADS", None)
 }
 
