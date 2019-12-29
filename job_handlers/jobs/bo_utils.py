@@ -38,7 +38,7 @@ def optimise(f: Callable, domain: List[dict], max_iter: int, exploit_iter: int, 
         'domain': domain,  # box-constraints of the problem
         'acquisition_type': 'EI',  # Selects the Expected improvement
         'initial_design_numdata': initial_design_numdata_factor * len(domain),  # Number of initial points
-        'exact_feval': False
+        'exact_feval': True
     }
     print(f"bo_kwargs: {bo_kwargs}")
 
