@@ -24,7 +24,11 @@ def get_domain(Omega_limits: Tuple[float, float], Delta_limits: Tuple[float, flo
            ]
 
 
-def optimise(f: Callable, domain: List[dict], max_iter: int, exploit_iter: int, initial_design_numdata_factor: int = 4):
+def optimise(
+        f: Callable, domain: List[dict], max_iter: int, exploit_iter: int,
+        initial_design_numdata_factor: int = 4,
+        exact_feval: bool = True,
+):
     """
     :param f:
         function to optimize.
@@ -38,7 +42,7 @@ def optimise(f: Callable, domain: List[dict], max_iter: int, exploit_iter: int, 
         'domain': domain,  # box-constraints of the problem
         'acquisition_type': 'EI',  # Selects the Expected improvement
         'initial_design_numdata': initial_design_numdata_factor * len(domain),  # Number of initial points
-        'exact_feval': True
+        'exact_feval': exact_feval
     }
     print(f"bo_kwargs: {bo_kwargs}")
 
@@ -49,7 +53,6 @@ def optimise(f: Callable, domain: List[dict], max_iter: int, exploit_iter: int, 
 
     optimisation_kwargs = {
         'max_iter': max_iter,
-        # 'max_time': 300,
     }
     print(f"optimisation_kwargs: {optimisation_kwargs}")
     bo.run_optimization(**optimisation_kwargs)

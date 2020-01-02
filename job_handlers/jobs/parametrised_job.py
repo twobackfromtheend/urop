@@ -34,8 +34,16 @@ print(f"Characteristic V: {characteristic_V:.3e} Hz")
 LOCAL_JOB_ENVVARS = {
     'PBS_JOBID': 'LOCAL_JOB',
     'N': '8',
+
+    # 'Q_GEOMETRY': 'DoubleRing(8, spacing=LATTICE_SPACING)',
+    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, False, True, False, True])',
+
+    # 'Q_GEOMETRY': 'Star(8, spacing=LATTICE_SPACING)',
+    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, False, True, False, True])',
+
     'Q_GEOMETRY': 'RegularLattice(shape=(8,), spacing=LATTICE_SPACING)',
-    'Q_GHZ_STATE': 'CustomGHZState(N, [True, True, True, True, True, True, True, True])',
+    # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, True, True, True, True, True, True, True])',
+    'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True, False, True, False, True, False])',
 
     # 'Q_GEOMETRY': 'RegularLattice(shape=(4, 2), spacing=LATTICE_SPACING)',
     # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, False, True, True, False, False, True])',
@@ -119,6 +127,8 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
 
 
 if __name__ == '__main__':
+    np.set_printoptions(linewidth=200, precision=None, floatmode='maxprec')
+
     trigger_event("job_progress", value1="Job started", value2=job_id)
 
     protocol_timesteps = 3
