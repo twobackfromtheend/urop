@@ -13,8 +13,8 @@ LATEX_PREAMBLE = r"""
 \usepackage{amsfonts}
 \usepackage{braket}
 
-\newcommand{\ghzalt}{\ket{\mathrm{GHZ}_8^\mathrm{alt}}}
-\newcommand{\ghzstd}{\ket{\mathrm{GHZ}_8^\mathrm{std}}}
+\newcommand{\ghzalt}{\ket{\mathrm{GHZ}_{12}^\mathrm{alt}}}
+\newcommand{\ghzstd}{\ket{\mathrm{GHZ}_{12}^\mathrm{std}}}
 
 \newcommand{\qg}{{\circ}}
 \newcommand{\qe}{{\bullet}}

@@ -18,7 +18,7 @@ class StaticQubitSystem(BaseQubitSystem):
         self.Omega = Omega
         self.Delta = Delta
 
-        self.states = states.get_states(self.N)
+        self.states = states.get_states(self.N, sparse=True)
         self.Omega_zero_energies = None
         self.Omega_non_zero_energies = None
 

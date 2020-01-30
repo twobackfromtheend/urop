@@ -40,7 +40,7 @@ def _create_pxp_hamiltonian(N: int):
 
 
 def create_pxp_plots():
-    N = 12
+    N = 16
     pxp_hamiltonian = _create_pxp_hamiltonian(N)
     pxp_eigenenergies, pxp_eigenstates = q.eigh(q.qu(pxp_hamiltonian, sparse=False))
     # pxp_eigenenergies, pxp_eigenstates = q.eigh(q.qu(pxp_hamiltonian, sparse=False), autoblock=True)

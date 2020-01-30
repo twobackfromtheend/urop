@@ -43,7 +43,7 @@ class RegularLattice3D(BaseGeometry):
 
 
 if __name__ == '__main__':
-    lattice = RegularLattice3D(shape=(3, 3, 3), spacing=0.5)
+    lattice = RegularLattice3D(shape=(2, 2, 2), spacing=0.5)
 
     print(lattice.coordinates)
 

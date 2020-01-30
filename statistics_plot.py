@@ -28,7 +28,6 @@ def get_e_qs(D: int, GHZ: str):
     LATTICE_SPACING = 1.5e-6
 
     N = 8
-    assert D == 1 or D == 2, f"D has to be 1 or 2, not {D}"
     assert GHZ == "std" or GHZ == "alt", f"GHZ has to be std or alt, not {GHZ}"
     ghz_component = [True, True, True, True, True, True, True, True] if GHZ == "std" else None
     if D == 1:
@@ -39,6 +38,12 @@ def get_e_qs(D: int, GHZ: str):
         geometry_shape = (4, 2)
         if GHZ == "alt":
             ghz_component = [True, False, False, True, True, False, False, True]
+    elif D == 3:
+        geometry_shape = (2, 2, 2)
+        if GHZ == "alt":
+            ghz_component = [True, False, False, True, False, True, True, False]
+    else:
+        raise ValueError(f"Unknown D: {D}")
 
     geometry = RegularLattice(shape=geometry_shape, spacing=LATTICE_SPACING)
     ghz_state = CustomGHZState(N, ghz_component)
@@ -410,9 +415,10 @@ def generate_N_pc_investigation_plot(e_qs: EvolvingQubitSystem, name: str):
 
 
 def save_fig(fig, name: str):
-    # plt.show()
-    fig.savefig(f"plots/final/2_{name}.png", dpi=300)
+    plt.show()
+    # fig.savefig(f"plots/final/2_{name}.png", dpi=300)
     plt.close(fig)
+
 
 optimised_protocols = {
     1: {
@@ -434,11 +440,15 @@ optimised_protocols = {
         # 0.60493
         'std': [1.65811738e+09, 8.29998385e+08, 1.82769297e+09, 2.57907175e+09, 2.71117607e+09, 1.94975775e+09],
         # 0.97098
-        'alt': [8.94101353e+07, 1.34436283e+08, 3.17347152e+07, 1.90844269e+08, 9.70544131e+07, 8.64859020e+07]
+        # 'alt': [8.94101353e+07, 1.34436283e+08, 3.17347152e+07, 1.90844269e+08, 9.70544131e+07, 8.64859020e+07]
         # 0.99998
+        'alt': [1.64782808e+07, 9.85419648e+07, 8.34900676e+07, 8.67334467e+07, 2.05864069e+08, 1.06214334e+08]
+    },
+    3: {
+        'std': [1.94735741e+09, 1.17085412e+09, 1.98626869e+09, 3.46749476e+09, 1.84125209e+09, 2.39486724e+09],
+        'alt': [1.67533312e+08, 1.80310100e+08, 8.37019945e+06, 3.61327852e+08, 1.92993336e+08, 1.63023464e+08]
     }
 }
-
 
 if __name__ == '__main__':
     plt.rc('text', usetex=True)
@@ -446,10 +456,12 @@ if __name__ == '__main__':
     plt.rc('text.latex', preamble=r'\usepackage{upgreek}')
 
     setups = [
-        (1, "std"),
-        (1, "alt"),
-        (2, "std"),
+        # (1, "std"),
+        # (1, "alt"),
+        # (2, "std"),
         (2, "alt"),
+        # (3, "std"),
+        # (3, "alt"),
     ]
     for D, ghz in setups:
         e_qs = get_e_qs(D, ghz)

@@ -49,10 +49,16 @@ class RegularLattice(BaseGeometry):
             for i, (x, y) in enumerate(self.coordinates):
                 plt.text(x, y, i)
 
+                col = i // self.shape[1]
+                row = i - self.shape[1] * col
+                plt.text(x, y + self.spacing * 0.2, f"{row}, {col}", color='blue')
+
             plt.gca().set_aspect('equal', 'datalim')
             plt.grid()
             plt.tight_layout()
         elif self.dimensions == 3:
+            from mpl_toolkits.mplot3d import Axes3D
+
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
@@ -60,12 +66,18 @@ class RegularLattice(BaseGeometry):
             for i, (x, y, z) in enumerate(self.coordinates):
                 ax.text(x, y, z, i)
 
+                x_i = i // (self.shape[1] * self.shape[2])
+                y_i = (i - x_i * (self.shape[1] * self.shape[2])) // (self.shape[2])
+                z_i = (i - x_i * (self.shape[1] * self.shape[2]) - y_i * self.shape[2])
+                ax.text(x, y, z + self.spacing * 0.2, f"{x_i}, {y_i}, {z_i}", color='blue')
+
             plt.grid()
             plt.tight_layout()
 
 
 if __name__ == '__main__':
-    lattice = RegularLattice(shape=(4, 2), spacing=1.5e-6, )
+    lattice = RegularLattice(shape=(4, 3, 2), spacing=1.5e-6, )
+    # lattice = RegularLattice(shape=(4, 3), spacing=1.5e-6, )
     print(lattice.coordinates)
 
     print(lattice.get_distance(0, 3))

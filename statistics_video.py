@@ -20,54 +20,10 @@ from protocol_generator.interpolation_pg import InterpolationPG
 from qubit_system.geometry import RegularLattice
 from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 from qubit_system.utils.ghz_states import CustomGHZState
+from statistics_plot import get_e_qs
 
 COLORMAP = 'plasma'
 norm = LogNorm(vmin=1e-4, vmax=1, clip=True)
-
-
-def get_e_qs(D: int, GHZ: str):
-    N_RYD = 50
-    C6 = interaction_constants.get_C6(N_RYD)
-
-    LATTICE_SPACING = 1.5e-6
-
-    N = 8
-    assert D == 1 or D == 2, f"D has to be 1 or 2, not {D}"
-    assert GHZ == "std" or GHZ == "alt", f"GHZ has to be std or alt, not {GHZ}"
-    ghz_component = [True, True, True, True, True, True, True, True] if GHZ == "std" else None
-    if D == 1:
-        geometry_shape = (8,)
-        if GHZ == "alt":
-            ghz_component = [True, False, True, False, True, False, True, False]
-    elif D == 2:
-        geometry_shape = (4, 2)
-        if GHZ == "alt":
-            ghz_component = [True, False, False, True, True, False, False, True]
-
-    geometry = RegularLattice(shape=geometry_shape, spacing=LATTICE_SPACING)
-    ghz_state = CustomGHZState(N, ghz_component)
-    protocol = optimised_protocols[D][GHZ]
-
-    t = 2e-6
-    interpolation_timesteps = 3000
-    t_list = np.linspace(0, t, interpolation_timesteps + 1)
-
-    protocol_generator = InterpolationPG(t_list, kind="quadratic")
-    Omega, Delta = protocol_generator.get_protocol(np.array(protocol))
-    e_qs = EvolvingQubitSystem(
-        N, C6, geometry,
-        Omega, Delta,
-        t_list,
-        ghz_state=ghz_state
-    )
-    start_time = time.time()
-    e_qs.solve()
-
-    print(f"Solved in {time.time() - start_time:.3f}s")
-    ghz_fidelity = e_qs.get_fidelity_with("ghz")
-
-    print(f"{D}D {GHZ} fidelity: {ghz_fidelity:.5f}")
-    return e_qs
 
 
 def setup_figure():
@@ -147,8 +103,8 @@ def update_figure(i: int, e_qs: EvolvingQubitSystem, ax1: Axes, ax2: Axes, ax3: 
     counts = defaultdict(lambda: 1)
     for i, instantaneous_eigenstate in enumerate(inst_eigenstates):
         eigenenergy = eigenenergies[i]
-        if eigenenergy > 0.5e9:
-            continue
+        # if eigenenergy > 0.5e9:
+        #     continue
 
         ghz_overlap = q.fidelity(ghz_state, instantaneous_eigenstate)
         instantaneous_state_overlap = q.fidelity(system_state, instantaneous_eigenstate)
@@ -227,13 +183,12 @@ def update_figure(i: int, e_qs: EvolvingQubitSystem, ax1: Axes, ax2: Axes, ax3: 
         cmap=cmap_array, norm=norm,
         s=10
     )
-    # ax1.set_ylabel(f"$t = {t * 1e6:.2f}$ $\mu$s")
-    text = ax1.text(0.95, 0.05, f"$t = {t * 1e6:.2f}$ $\mu$s", ha='right', va='center', transform=ax1.transAxes)
+    ax1.set_ylabel(f"$t = {t * 1e6:.2f}$ $\mu$s")
+    # text = ax1.text(0.95, 0.05, f"$t = {t * 1e6:.2f}$ $\mu$s", ha='right', va='center', transform=ax1.transAxes)
 
     line = ax3.axvline(x=t, alpha=0.3, color='k', linewidth=3)
 
-
-    return [scatter1, scatter2, line, text] + count_labels
+    return [scatter1, scatter2, line] + count_labels
 
 
 def save_video(e_qs: EvolvingQubitSystem, name: str):
@@ -251,7 +206,7 @@ def save_video(e_qs: EvolvingQubitSystem, name: str):
 
     # moviewriter = FFMpegWriter(fps=60)
     moviewriter = FasterFFMpegWriter(fps=30, bitrate=3000)
-    with moviewriter.saving(fig, f'plots/final/videos/test_eigenstates_evolution_{name}.mp4', dpi=90):
+    with moviewriter.saving(fig, f'plots/final/videos/___eigenstates_evolution_{name}.mp4', dpi=90):
         for i in tqdm(indices):
             plots = update_figure(i, e_qs, ax1, ax2, ax3)
             moviewriter.grab_frame()
@@ -267,23 +222,13 @@ if __name__ == '__main__':
     plt.rc('font', family="serif", serif="CMU Serif")
     plt.rc('text.latex', preamble=r'\usepackage{upgreek}')
 
-    optimised_protocols = {
-        1: {
-            'std': [2.65629869e+07, 1.10137775e+09, 2.10554803e+07, 1.53833774e+09, 1.43818374e+09, 1.15576644e+09],
-            'alt': [2565801.10085787, 12372232.59839516, 6488618.09446081, 19508115.86734799, 13904167.59376139,
-                    10511527.37629483]
-        },
-        2: {
-            'std': [1.65811738e+09, 8.29998385e+08, 1.82769297e+09, 2.57907175e+09, 2.71117607e+09, 1.94975775e+09],
-            'alt': [8.94101353e+07, 1.34436283e+08, 3.17347152e+07, 1.90844269e+08, 9.70544131e+07, 8.64859020e+07]
-        }
-    }
-
     setups = [
         # (1, "std"),
-        (1, "alt"),
+        # (1, "alt"),
         # (2, "std"),
-        (2, "alt"),
+        # (2, "alt"),
+        (3, "std"),
+        (3, "alt"),
     ]
     for D, ghz in setups:
         e_qs = get_e_qs(D, ghz)

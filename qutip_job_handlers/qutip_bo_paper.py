@@ -69,10 +69,10 @@ LOCAL_JOB_ENVVARS = {
 
     # 'Q_GHZ_STATE': 'CustomGHZState(N, [True, False, True])',
 
-    'BO_MAX_ITER': '60',
+    'BO_MAX_ITER': '50',
     'BO_EXPLOIT_ITER': '0',
     'NUMBER_OF_EXCITED_WANTED': '5',
-    'REPEATS_PER_ITER': '5',
+    'BO_REPEATS_PER_ITER': '5',
     'initial_design_numdata_factor': '4',
 }
 
@@ -110,7 +110,7 @@ print(
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
-    f"\tREPEATS_PER_ITER: {REPEATS_PER_ITER}\n"
+    f"\tBO_REPEATS_PER_ITER: {REPEATS_PER_ITER}\n"
     f"\tNUMBER_OF_EXCITED_WANTED: {NUMBER_OF_EXCITED_WANTED}\n"
     f"\tinitial_design_numdata_factor: {initial_design_numdata_factor}\n"
 )

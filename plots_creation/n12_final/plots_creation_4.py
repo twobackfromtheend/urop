@@ -1,25 +1,25 @@
+from typing import List
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import ticker
 from matplotlib.axes import Axes
 from matplotlib.cm import ScalarMappable
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, ListedColormap
 from matplotlib.gridspec import GridSpec
 import quimb as q
 
 import interaction_constants
 from optimised_protocols import saver
-from plots_creation.utils import save_current_fig
+from plots_creation.n12_final.utils import save_current_fig
 from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 
-N = 8
-LATTICE_SPACING = 1.5e-6
+# COLORMAP = 'viridis_r'
+cmap = plt.cm.get_cmap('plasma')(np.linspace(0, 1, 100) ** 0.5)
+COLORMAP = ListedColormap(cmap[:-10, :-1])
 
-N_RYD = 50
-C6 = interaction_constants.get_C6(N_RYD)
 
-COLORMAP = 'viridis_r'
-NORM = LogNorm(vmin=1e-3, vmax=1, clip=True)
+NORM = LogNorm(vmin=1e-4, vmax=1, clip=True)
 
 
 def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, first: bool):
@@ -43,7 +43,7 @@ def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, 
         ax1.set_ylabel("$N_{PC}$")
         ax2.set_ylabel(r"Eigenstates")
     else:
-        ax1.get_yaxis().set_ticklabels([])
+        # ax1.get_yaxis().set_ticklabels([])
         ax2.get_yaxis().set_ticklabels([])
     plt.setp(ax1.get_xticklabels(), visible=False)
 
@@ -82,25 +82,26 @@ def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, 
     cs = np.array(cs).transpose()
     cs = cs[product_basis_is]
 
+    number_of_states = 2 ** e_qs.N
     ax2.imshow(
         cs,
         aspect='auto',
-        cmap=plt.cm.get_cmap(COLORMAP), norm=NORM,
+        cmap=COLORMAP, norm=NORM,
         origin='lower',
-        extent=(0, e_qs.solved_t_list[-1], 0, 256)
+        extent=(0, e_qs.solved_t_list[-1], 0, number_of_states)
     )
     for spine in ax2.spines.values():
         spine.set_visible(False)
 
     ax2.set_xlabel(r"Time [$\upmu$s]")
-    ax2.set_ylim((0, 256))
+    ax2.set_ylim((0, number_of_states))
     # ax1.set_ylim([0, ax1.get_ylim()[1]])
-    ax1.set_ylim([0, 200])
+    ax1.set_ylim([0, ax1.get_ylim()[1]])
     ax1.grid()
     ax1.set_xlim([0, 1e-6])
 
 
-def plot_N_pc():
+def plot_N_pc(bo_files: List[str], names: str):
     fig = plt.figure(figsize=(8, 6))
     # gs = fig.add_gridspec(5, 3, wspace=0.3, hspace=0.05, height_ratios=[1, 1, 0.7, 1, 1],
     #                       top=0.95, bottom=0.05, left=0.05, right=0.95)
@@ -117,10 +118,7 @@ def plot_N_pc():
 
     # fig, (axs) = plt.subplots(2, 3, sharex='col', sharey='row', figsize=(16, 6), gridspec_kw=gridspec_kwargs)
     ax1 = ax2 = None
-    for col, BO_file in enumerate([
-        f"BO_COMPARE_BO_3D_std_8",
-        f"BO_COMPARE_BO_3D_alt_8"
-    ]):
+    for col, BO_file in enumerate(bo_files):
         e_qs = saver.load(BO_file)
         # if ax1 is None:
         ax1 = fig.add_subplot(gs[0, col])
@@ -138,12 +136,17 @@ def plot_N_pc():
 
     cax = fig.add_subplot(gs[1, 2])
     mappable = ScalarMappable(norm=NORM, cmap=COLORMAP)
-    cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-3, 1e-2, 1e-1, 1], extend='min')
-    cbar.ax.set_yticklabels(['$< 0.001$', '$0.01$', '$0.1$', '$1$'])
+    cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-4, 1e-3, 1e-2, 1e-1, 1], extend='min')
+    cbar.ax.set_yticklabels(['$< 0.0001$', '$0.001$', '$0.01$', '$0.1$', '$1$'])
     cbar.ax.set_ylabel(r"Eigenstate population")
 
-    save_current_fig("npc")
+    save_current_fig(name)
 
 
 if __name__ == '__main__':
-    plot_N_pc()
+    for bo_files, name in [
+        ([f"12_BO_COMPARE_BO_1D_std_", f"12_BO_COMPARE_BO_1D_alt_", ], "npc_1d"),
+        ([f"12_BO_COMPARE_BO_2D_std_", f"12_BO_COMPARE_BO_2D_alt_", ], "npc_2d"),
+        ([f"12_BO_COMPARE_BO_3D_std_", f"12_BO_COMPARE_BO_3D_alt_", ], "npc_3d"),
+    ]:
+        plot_N_pc(bo_files, name)

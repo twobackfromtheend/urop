@@ -35,15 +35,20 @@ print(f"Lattice spacing: {LATTICE_SPACING}")
 job_id = "BO_INVESTIGATION"
 N = 8
 
-geometry_envvar = "NoisyRegularLattice(shape=(4, 2), spacing=LATTICE_SPACING, spacing_noise=10e-9)"
+# geometry_envvar = "NoisyRegularLattice(shape=(2, 2, 2), spacing=LATTICE_SPACING, spacing_noise=40e-9)"
+geometry_envvar = "NoisyRegularLattice(shape=(8,), spacing=LATTICE_SPACING, spacing_noise=40e-9)"
+ghz_state_envvar = "CustomGHZState(N, [True, False, True, False, True, False, True, False])"
+# geometry_envvar = "NoisyRegularLattice(shape=(4, 2), spacing=LATTICE_SPACING, spacing_noise=40e-9)"
+# ghz_state_envvar = "CustomGHZState(N, [True, False, False, True, True, False, False, True])"
+# geometry_envvar = "NoisyRegularLattice(shape=(2, 2, 2), spacing=LATTICE_SPACING, spacing_noise=40e-9)"
+# ghz_state_envvar = "CustomGHZState(N, [True, False, False, True, False, True, True, False])"
+
 geometry = eval(geometry_envvar)
-# ghz_state_envvar = "CustomGHZState(N, [True, False, True, False, True, False, True, False])"
 # ghz_state_envvar = "CustomGHZState(N, [True, True, True, True, True, True, True, True])"
-ghz_state_envvar = "CustomGHZState(N, [True, False, False, True, True, False, False, True])"
 ghz_state = eval(ghz_state_envvar)
 
 repeats = 5
-evaluation_iterations = 10
+evaluation_iterations = 50
 
 print(
     "Parameters:\n"
@@ -69,7 +74,7 @@ def get_f(e_qs: EvolvingQubitSystemWithGeometryNoise, protocol_generator: BasePr
 
         def get_figure_of_merit(input_: np.ndarray):
             fidelities = []
-            for i in range(5):
+            for i in range(10):
                 Omega, Delta = protocol_generator.get_protocol(input_)
                 e_qs.solve_with_protocol(Omega, Delta)
                 # component_products = e_qs.get_fidelity_with("ground") * e_qs.get_fidelity_with("excited") * 4
@@ -136,12 +141,12 @@ def optimise(f: Callable, domain: List[dict]):
         # maximise=True,
         # initial_design_type='latin',
         # model_type="sparseGP",
-        # batch_size=6,
+        batch_size=6,
         **bo_kwargs
     )
 
     optimisation_kwargs = {
-        'max_iter': 300,
+        'max_iter': 100,
         # 'max_time': 300,
     }
     print(f"optimisation_kwargs: {optimisation_kwargs}")
@@ -226,7 +231,7 @@ for repeat in range(repeats):
     protocol_generator.noise = 0.  # Set noise to 0 for saving optimised protocol.
     optimised_protocol = protocol_generator.get_protocol(optimised_controls)
 
-    save_file_path = Path(__file__).parent / f"{job_id}_{time.time()}.optimised.pkl"
+    # save_file_path = Path(__file__).parent / f"{job_id}_{time.time()}.optimised.pkl"
     # with save_file_path.open("wb") as f:
     #     save_dict = {
     #         'N': N,

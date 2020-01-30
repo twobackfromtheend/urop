@@ -110,10 +110,10 @@ geometry = RegularLattice(shape=(2, 2, 2), spacing=LATTICE_SPACING)
 
 
 # FILLING FRACTION LATTICE
-N = 9
-NUMBER_OF_EXCITED_WANTED = 5
-protocol = [4.71866199e+08, 6.65469914e+08, 1.07187077e+09, 8.28283448e+07, -5.93877163e+08, -1.02137811e+09]
-geometry = RegularLattice(shape=(9,), spacing=LATTICE_SPACING)
+# N = 9
+# NUMBER_OF_EXCITED_WANTED = 5
+# protocol = [4.71866199e+08, 6.65469914e+08, 1.07187077e+09, 8.28283448e+07, -5.93877163e+08, -1.02137811e+09]
+# geometry = RegularLattice(shape=(9,), spacing=LATTICE_SPACING)
 
 protocol_timesteps = 3
 t = 1e-6
@@ -136,6 +136,7 @@ figure_of_merit_kets = state_tensors_by_excited_count[NUMBER_OF_EXCITED_WANTED]
 _get_f_for_excited_count_quimb = get_f_function_generator(N)
 
 
+N=8
 def _get_f_for_excited_count(count: int):
     figure_of_merit_kets = state_tensors_by_excited_count[count]
 
@@ -191,8 +192,8 @@ def get_protocol_noise(input_: np.ndarray, t_list: np.ndarray):
     mean_Delta = Deltas.mean(axis=stats_axis)
 
     return mean_Omega, mean_Delta, \
-           np.percentile(Omegas, [15.9, 84.1], axis=stats_axis), \
-           np.percentile(Deltas, [15.9, 84.1], axis=stats_axis)
+           np.percentile(Omegas, [25, 75], axis=stats_axis), \
+           np.percentile(Deltas, [25, 75], axis=stats_axis)
 
 
 def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
@@ -209,23 +210,29 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
 
     Omega_color = "C0"
     Delta_color = "C3"
+    Omega_Delta_lw = 2.5
 
     use_delta_ax = False
     if use_delta_ax:
+        scaling = 1e9
         ls = "-"
-        ax1.plot(t_list, mean_Omega / 1e9, color=Omega_color, lw=3, alpha=0.8, ls=ls)
-        ax1.fill_between(t_list,
-                         (mean_Omega - Omegas_std) / 1e9,
-                         (mean_Omega + Omegas_std) / 1e9,
-                         color=Omega_color, alpha=0.3)
+        ax1.plot(t_list, mean_Omega / 1e9, color=Omega_color, lw=Omega_Delta_lw, alpha=0.8, ls=ls)
+        ax1.fill_between(
+            t_list,
+            Omega_lims[0] / scaling,
+            Omega_lims[1] / scaling,
+            color=Omega_color, alpha=0.3
+        )
         ax1.locator_params(nbins=3, axis='x')
 
         Delta_ax = ax1.twinx()
-        Delta_ax.plot(t_list, mean_Delta / 1e9, color=Delta_color, lw=3, alpha=0.8, ls=ls)
-        Delta_ax.fill_between(t_list,
-                              (mean_Delta - Deltas_std) / 1e9,
-                              (mean_Delta + Deltas_std) / 1e9,
-                              color=Delta_color, alpha=0.3)
+        Delta_ax.plot(t_list, mean_Delta / 1e9, color=Delta_color, lw=Omega_Delta_lw, alpha=0.8, ls=ls)
+        Delta_ax.fill_between(
+            t_list,
+            Delta_lims[0] / scaling,
+            Delta_lims[1] / scaling,
+            color=Delta_color, alpha=0.3
+        )
 
         # ax1.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
         ax1.locator_params(nbins=4, axis='y')
@@ -241,19 +248,25 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
         Delta_ax.tick_params(axis='y', labelcolor=Delta_color)
     else:
         ls = "-"
-        factor = 1
-        ax1.plot(t_list, mean_Omega / factor, color=Omega_color, lw=3, alpha=0.8, ls=ls, label=r"$\Omega$")
-        ax1.fill_between(t_list,
-                         (mean_Omega - Omegas_std) / factor,
-                         (mean_Omega + Omegas_std) / factor,
-                         color=Omega_color, alpha=0.3)
+        scaling = 1
+        ax1.plot(t_list, mean_Omega / scaling, color=Omega_color, lw=Omega_Delta_lw, alpha=0.8, ls=ls,
+                 label=r"$\Omega$")
+        ax1.fill_between(
+            t_list,
+            Omega_lims[0] / scaling,
+            Omega_lims[1] / scaling,
+            color=Omega_color, alpha=0.3
+        )
         ax1.locator_params(nbins=3, axis='x')
 
-        ax1.plot(t_list, mean_Delta / factor, color=Delta_color, lw=3, alpha=0.8, ls=ls, label=r"$\Delta$")
-        ax1.fill_between(t_list,
-                         (mean_Delta - Deltas_std) / factor,
-                         (mean_Delta + Deltas_std) / factor,
-                         color=Delta_color, alpha=0.3)
+        ax1.plot(t_list, mean_Delta / scaling, color=Delta_color, lw=Omega_Delta_lw, alpha=0.8, ls=ls,
+                 label=r"$\Delta$")
+        ax1.fill_between(
+            t_list,
+            Delta_lims[0] / scaling,
+            Delta_lims[1] / scaling,
+            color=Delta_color, alpha=0.3
+        )
         ax1.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
 
     delta = (t_list.max() - t_list.min()) * 0.01
@@ -263,6 +276,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
     # cmap = plt.get_cmap("Set1")
     cmap = plt.get_cmap("tab10")
     # cmap = plt.get_cmap("Pastel1")
+
     for i in trange(N + 1):
         # label = r"$\boldsymbol{\mathcal{F}_{" + str(
         #     i) + "}}$" if i == NUMBER_OF_EXCITED_WANTED else r"$\mathcal{F}_{" + str(i) + "}$"
@@ -273,7 +287,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
             [figure_of_merit_func(_instantaneous_state)
              for _instantaneous_state in solve_result.states],
             label=label,
-            lw=3,
+            lw=2,
             alpha=0.8,
             color=cmap(i / 10)
         )
@@ -290,7 +304,8 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes,
     # ax2.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     # ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    # ax2.legend(loc=9, ncol=3, fontsize="x-small")
+    # ax2.legend(loc=9, ncol=2, framealpha=1)
+    # ax2.legend(loc=9, ncol=2, fontsize="x-small")
     # ax1.legend()
 
 
@@ -480,16 +495,39 @@ def _plot_atom_excited_population_at_end(ax1: Axes, solve_result, ):
 
 
 def protocol_and_fidelity_for_protocols():
-    protocols = {
-        # "Without $\mathcal{F}$ noise":
-        "without_noise":
-            [9.65565736e+08, 1.64856694e+08, 3.46018289e+08, -6.30177185e+08, -1.81838611e+08, 3.27368113e+08],
-        # "With $\mathcal{F}$ noise_4_excitations":
-        #     [2.66932321e+08, 8.05425247e+08, 6.50007944e+08, 5.18053354e+07, 2.93691168e+08, -6.65262643e+08]
-        # "With $\mathcal{F}$ noise":
-        "with_noise":
-            [8.31230692e+08, 1.06683247e+09, 1.14319962e+09, - 7.10045638e+08, - 1.61976697e+08, 1.76821149e+09]
+    # N = 9
+    # NUMBER_OF_EXCITED_WANTED = 5
+    # geometry = RegularLattice(shape=(9,), spacing=LATTICE_SPACING)
+    # protocols = {
+    #     # "Without $\mathcal{F}$ noise":
+    #     "without_noise":
+    #         [9.65565736e+08, 1.64856694e+08, 3.46018289e+08, -6.30177185e+08, -1.81838611e+08, 3.27368113e+08],
+    #     # "With $\mathcal{F}$ noise_4_excitations":
+    #     #     [2.66932321e+08, 8.05425247e+08, 6.50007944e+08, 5.18053354e+07, 2.93691168e+08, -6.65262643e+08]
+    #     # "With $\mathcal{F}$ noise":
+    #     "with_noise":
+    #     # [8.31230692e+08, 1.06683247e+09, 1.14319962e+09, - 7.10045638e+08, - 1.61976697e+08, 1.76821149e+09]
+    #         [6.45405329e+08, 8.06989351e+08, 9.64930590e+08, -1.11032193e+09, 1.70090502e+08, 1.80252596e+09]
+    # }
 
+    # N = 9
+    # NUMBER_OF_EXCITED_WANTED = 5
+    # geometry = RegularLattice(shape=(3, 3), spacing=LATTICE_SPACING)
+    # protocols = {
+    #     "without_noise":
+    #         [1.53246616e+09, 1.35082403e+06, 1.66224646e+09, -1.41329525e+09, -5.16672129e+08, 1.21000427e+09],
+    #     "with_noise":
+    #         [1.08818180e+09, 8.00003174e+08, 1.98909225e+09, -1.85038475e+09, 1.04629106e+09, 2.51910399e+09]
+    # }
+
+    N = 8
+    NUMBER_OF_EXCITED_WANTED = 4
+    geometry = RegularLattice(shape=(2, 2, 2), spacing=LATTICE_SPACING)
+    protocols = {
+        "without_noise":
+            [4.64808064e+08, 1.17036337e+09, 1.39071766e+09, -1.80894216e+09, 3.76733066e+08, 1.40485028e+09],
+        "with_noise":
+            [1.56731474e+09, 1.50590736e+09, 1.88557228e+08, 1.77865580e+09, -1.38031784e+08, -8.13925779e+07]
     }
     gridspec_kwargs = {
         'top': 0.95,
@@ -561,7 +599,7 @@ def protocol_and_fidelity_for_protocols():
         # Calculate F distribution
         def get_fidelity_noise(input_: np.ndarray):
             figure_of_merit_over_times = []
-            for i in range(15):
+            for i in range(50):
                 solve_result = do_iteration(input_)
                 figure_of_merit_over_time = [
                     figure_of_merit_func(_instantaneous_state)
@@ -575,7 +613,7 @@ def protocol_and_fidelity_for_protocols():
             mean_figure_of_merit_over_times = figure_of_merit_over_times.mean(axis=stats_axis)
 
             return mean_figure_of_merit_over_times, \
-                   np.percentile(figure_of_merit_over_times, [15.9, 84.1], axis=stats_axis)
+                   np.percentile(figure_of_merit_over_times, [25, 75], axis=stats_axis)
 
         def do_iteration(input_: np.ndarray):
             Omega, Delta = get_protocol_from_input(input_, t_list)
@@ -605,13 +643,13 @@ def protocol_and_fidelity_for_protocols():
             alpha=0.8,
             color=cmap(i / N)
         )
-        # ax2.fill_between(
-        #     t_list,
-        #     fidelities_lims[0] / scaling,
-        #     fidelities_lims[1] / scaling,
-        #     color=cmap(i / N),
-        #     alpha=0.3
-        # )
+        ax2.fill_between(
+            t_list,
+            fidelities_lims[0] / scaling,
+            fidelities_lims[1] / scaling,
+            color=cmap(i / N),
+            alpha=0.3
+        )
 
         ax1.locator_params(nbins=4, axis='y')
         # ax1.set_ylabel(r"$\Omega (t)$ [GHz]", color=Omega_color)
@@ -645,19 +683,26 @@ def protocol_and_fidelity_for_protocols():
 
 # print(plt.rcParams["font.size"])
 # plt.rcParams["font.size"] = 20
+
 # Plot protocol and fidelity
 # gridspec_kwargs = {
 #     'top': 0.95,
 #     'bottom': 0.08,
+#     # With delta ax
 #     # 'left': 0.15,
 #     # 'right': 0.80,
+#
+#     # Without delta ax
 #     'left': 0.22,
 #     'right': 0.96,
 #     'hspace': 0
 # }
 # fig, (ax1, ax2) = plt.subplots(2, 1, sharex='all', gridspec_kw=gridspec_kwargs, figsize=(3.5, 3))
+# # fig, (ax1, ax2) = plt.subplots(2, 1, sharex='all', gridspec_kw=gridspec_kwargs, figsize=(10, 9))
 # _plot_protocol_and_fidelity(ax1, ax2, t_list, solve_result,
 #                             first=True, last=True)
+# # plt.savefig(f"bo_paper_plots/N{N}_OPT{NUMBER_OF_EXCITED_WANTED}_{len(geometry.shape)}d_legend.png",
+# #             dpi=900)
 # plt.savefig(f"bo_paper_plots/N{N}_OPT{NUMBER_OF_EXCITED_WANTED}_{len(geometry.shape)}d.png",
 #             dpi=300)
 # plt.show()

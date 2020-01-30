@@ -42,6 +42,7 @@ class Star(BaseGeometry):
             if i == 0:
                 coordinates.append(unit_inner_ring_coordinates * _scaling_factor)
             else:
+                _scaling_factor /= 1.0355
                 coordinates.append(unit_outer_ring_coordinates * _scaling_factor)
 
         self.coordinates = np.vstack(coordinates)
@@ -68,4 +69,5 @@ if __name__ == '__main__':
     plt.rc('text', usetex=True)
     geometry = Star(8, spacing=1)
     # geometry.plot(show=True,)
+    print(geometry.get_distance(1, 6))
     geometry.plot(show=True, savefig_name="geometry_star_8")

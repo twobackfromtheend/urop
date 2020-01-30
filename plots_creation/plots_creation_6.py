@@ -80,8 +80,12 @@ def _plot_time_dependent_eigenenergies(ax1: Axes, e_qs: EvolvingQubitSystem, fir
     delta = (e_qs.t_list.max() - e_qs.t_list.min()) * 0.01
     ax1.set_xlim((e_qs.t_list.min() - delta, e_qs.t_list.max() + delta))
 
-    ax1.xaxis.set_major_formatter(ticker.EngFormatter('s'))
-    ax1.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
+    # ax1.xaxis.set_major_formatter(ticker.EngFormatter('s'))
+    # ax1.yaxis.set_major_formatter(ticker.EngFormatter('Hz'))
+    ax1.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * 1e6)))
+    ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x / 1e9)))
+
+
     if first:
         ax1.set_ylabel('Eigenenergies')
     ax1.locator_params(nbins=4, axis='y')
@@ -89,19 +93,20 @@ def _plot_time_dependent_eigenenergies(ax1: Axes, e_qs: EvolvingQubitSystem, fir
 
     # ax1.set_facecolor('k')
     ax1.grid(alpha=0.5)
+    ax1.set_xlabel(r"Time [$\upmu$s]")
 
 
 def plot_time_dependent_eigenenergies():
-    fig = plt.figure(figsize=(12, 4))
+    fig = plt.figure(figsize=(9, 3))
     # gs = fig.add_gridspec(5, 3, wspace=0.3, hspace=0.05, height_ratios=[1, 1, 0.7, 1, 1],
     #                       top=0.95, bottom=0.05, left=0.05, right=0.95)
     gridspec_kwargs = {
         'nrows': 1,
         'ncols': 4,
         'hspace': 0.1,
-        'wspace': 0.3,
+        'wspace': 0.1,
         'width_ratios': [15, 1, 15, 1],
-        'top': 0.90, 'bottom': 0.07, 'left': 0.12, 'right': 0.90
+        'top': 0.84, 'bottom': 0.2, 'left': 0.07, 'right': 0.87
     }
     gs = GridSpec(**gridspec_kwargs)
 
@@ -120,7 +125,7 @@ def plot_time_dependent_eigenenergies():
             first=col == 0,
         )
         ghz_ket = r"\ghzstd" if "std" in BO_file else r"\ghzalt"
-        ax1.set_title(f"3D,  " + r"$\qquad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
+        ax1.set_title(f"3D, " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
 
     cax = fig.add_subplot(gs[0, 3])
     mappable = ScalarMappable(norm=NORM, cmap=COLORMAP)
