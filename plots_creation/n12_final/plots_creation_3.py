@@ -214,15 +214,5 @@ if __name__ == '__main__':
         f"12_BO_COMPARE_BO_1D_std_",
         f"12_BO_COMPARE_BO_1D_alt_",
     ]
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     # save_time_dependent_energies(BO_FILES)
     plot_time_dependent_eigenenergies()
-=======
-    save_time_dependent_energies()
-#     plot_time_dependent_eigenenergies()
->>>>>>> Stashed changes
-=======
-    save_time_dependent_energies()
-#     plot_time_dependent_eigenenergies()
->>>>>>> Stashed changes
