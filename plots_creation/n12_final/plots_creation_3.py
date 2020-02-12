@@ -23,7 +23,7 @@ COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
 
 NORM = LogNorm(vmin=1e-4, vmax=1, clip=True)
 
-DATA_PATH = Path("inst_eigenstates")
+DATA_PATH = Path(__file__).parent / "inst_eigenstates"
 
 
 def _save_time_dependent_eigenstates(e_qs: EvolvingQubitSystem, name: str):
