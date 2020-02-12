@@ -15,53 +15,29 @@ from plots_creation.n12_final.utils import save_current_fig
 from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 
 # COLORMAP = 'viridis_r'
-_cmap = plt.cm.get_cmap('gist_yarg')(np.linspace(0, 1, 100) ** 0.7)
-_cmap = _cmap[:-10]
-COLORMAP = ListedColormap(_cmap)
-COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
+cmap = plt.cm.get_cmap('gist_yarg')(np.linspace(0, 1, 100) ** 0.5)
+COLORMAP = ListedColormap(cmap[:-10, :-1])
+
+
 NORM = LogNorm(vmin=1e-4, vmax=1, clip=True)
 
 
-# _cmap = plt.cm.get_cmap('plasma_r')(np.linspace(0, 1, 300))
-# _cmap = _cmap[:-10]
-# # _cmap[:, -1] = np.linspace(0.3, 1, len(_cmap))
-# COLORMAP = ListedColormap(_cmap)
-# COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
-# NORM = LogNorm(vmin=1e-3, vmax=1, clip=True)
-
-
-def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, first: bool):
+def _plot_populations(ax1: Axes, e_qs: EvolvingQubitSystem, first: bool):
     # ax1.xaxis.set_major_formatter(ticker.EngFormatter('s'))
     ax1.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * 1e6)))
     system_states = e_qs.solved_states
-    N_pcs = []
-    for state in system_states:
-        sum_powers = np.sum((np.power(np.abs(state), 4)))
-        N_pc = 1 / sum_powers
-        N_pcs.append(N_pc)
-    ax1.plot(
-        e_qs.solved_t_list, N_pcs,
-        color='C0', linewidth=.5,
-        alpha=0.9
-    )
     ax1.locator_params(nbins=3, axis='x')
     ax1.locator_params(nbins=4, axis='y')
 
     if first:
-        ax1.set_ylabel("$N_{PC}$")
-        ax2.set_ylabel(r"Eigenstates")
+        ax1.set_ylabel(r"Eigenstates")
     else:
-        # ax1.get_yaxis().set_ticklabels([])
-        ax2.get_yaxis().set_ticklabels([])
-    plt.setp(ax1.get_xticklabels(), visible=False)
+        ax1.get_yaxis().set_ticklabels([])
 
     # Eigenstate plot
     cs = []
     for i, state in enumerate(system_states):
         state_abs = np.abs(state)
-        sum_powers = np.sum((np.power(state_abs, 4)))
-        N_pc = 1 / sum_powers
-        N_pcs.append(N_pc)
 
         if i % 5 == 0:
             populations = np.power(state_abs, 2)
@@ -71,14 +47,10 @@ def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, 
 
             cs.append(populations)
 
-            # for limit in limits:
-            #     count_above_limit = np.sum(populations >= limit)
-            #     counts[limit].append(count_above_limit)
 
     eigenenergies, eigenstates = q.eigh(q.qu(e_qs.get_hamiltonian(0, -1), sparse=False))
 
     eigenenergies_inds = eigenenergies.argsort()
-    # print(eigenenergies.shape)
     eigenstates = eigenstates.T
     product_basis_is = []
     for i, eigenstate in enumerate(eigenstates[eigenenergies_inds]):
@@ -91,36 +63,31 @@ def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, 
     cs = cs[product_basis_is]
 
     number_of_states = 2 ** e_qs.N
-    ax2.imshow(
+    ax1.imshow(
         cs,
         aspect='auto',
         cmap=COLORMAP, norm=NORM,
         origin='lower',
         extent=(0, e_qs.solved_t_list[-1], 0, number_of_states)
     )
-    # for spine in ax2.spines.values():
-    #     spine.set_visible(False)
+    for spine in ax1.spines.values():
+        spine.set_visible(False)
 
-    ax2.set_xlabel(r"Time [$\upmu$s]")
-    ax2.set_ylim((0, number_of_states))
-    # ax1.set_ylim([0, ax1.get_ylim()[1]])
-    ax1.set_ylim([0, ax1.get_ylim()[1]])
-    ax1.grid()
-    ax1.set_xlim([0, 1e-6])
+    ax1.set_xlabel(r"Time [$\upmu$s]")
+    ax1.set_ylim((0, number_of_states))
 
 
-def plot_N_pc(bo_files: List[str], names: str):
-    fig = plt.figure(figsize=(8.5, 4.5))
+def plot_populations(bo_files: List[str], names: str):
+    fig = plt.figure(figsize=(8.5, 6))
     # gs = fig.add_gridspec(5, 3, wspace=0.3, hspace=0.05, height_ratios=[1, 1, 0.7, 1, 1],
     #                       top=0.95, bottom=0.05, left=0.05, right=0.95)
     gridspec_kwargs = {
         'nrows': 2,
-        'ncols': 3,
+        'ncols': 1,
         'hspace': 0.1,
         'wspace': 0.2,
         'width_ratios': [15, 15, 1],
-        'height_ratios': [1, 1],
-        'top': 0.88, 'bottom': 0.15, 'left': 0.10, 'right': 0.86
+        'top': 0.92, 'bottom': 0.1, 'left': 0.10, 'right': 0.86
     }
     gs = GridSpec(**gridspec_kwargs)
 
@@ -130,27 +97,16 @@ def plot_N_pc(bo_files: List[str], names: str):
         e_qs = saver.load(BO_file)
         # if ax1 is None:
         ax1 = fig.add_subplot(gs[0, col])
-        # else:
-        #     ax1 = fig.add_subplot(gs[0, col], sharey=ax1)
 
-        ax2 = fig.add_subplot(gs[1, col], sharex=ax1)
-
-        _plot_N_pc_and_populations(
-            ax1, ax2, e_qs,
+        _plot_populations(
+            ax1, e_qs,
             first=col == 0,
         )
-        D = len(e_qs.geometry.shape)
-        ghz_ket = r"\ghzstdd" if "std" in BO_file else r"\ghzaltd"
-        ghz_ket  += "{" + str(D) + "}"
-        # ax1.set_title(f"{len(e_qs.geometry.shape)}D, " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
-        ax1.set_title(f"${ghz_ket}$")
+        ghz_ket = r"\ghzstd" if "std" in BO_file else r"\ghzalt"
+        ax1.set_title(f"{len(e_qs.geometry.shape)}D, " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
 
     cax = fig.add_subplot(gs[1, 2])
-    mappable = ScalarMappable(norm=NORM, cmap=COLORMAP_CBAR)
-
-    # cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-3, 1e-2, 1e-1, 1], extend='min')
-    # cbar.ax.set_yticklabels(['$< 10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])
-
+    mappable = ScalarMappable(norm=NORM, cmap=COLORMAP)
     cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-4, 1e-3, 1e-2, 1e-1, 1], extend='min')
     # cbar.ax.set_yticklabels(['$< 0.0001$', '$0.001$', '$0.01$', '$0.1$', '$1$'])
     cbar.ax.set_yticklabels(['$< 10^{-4}$', '$10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])

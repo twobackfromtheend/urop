@@ -16,6 +16,10 @@ LATEX_PREAMBLE = r"""
 \newcommand{\ghzalt}{\ket{\mathrm{GHZ}_{12}^\mathrm{alt}}}
 \newcommand{\ghzstd}{\ket{\mathrm{GHZ}_{12}^\mathrm{std}}}
 
+\newcommand{\ghzaltd}[1]{\ket{\mathrm{GHZ}_{12}^\mathrm{#1D,alt}}}
+\newcommand{\ghzstdd}[1]{\ket{\mathrm{GHZ}_{12}^\mathrm{#1D,std}}}
+
+
 \newcommand{\qg}{{\circ}}
 \newcommand{\qe}{{\bullet}}
 """
