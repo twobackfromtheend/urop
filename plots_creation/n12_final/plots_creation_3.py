@@ -46,7 +46,7 @@ def _save_time_dependent_eigenstates(e_qs: EvolvingQubitSystem, name: str):
         np.savez_compressed(DATA_PATH / f"{name}.{i}.states.npz", instantaneous_eigenstates)
 
 
-def save_time_dependent_energies():
+def save_time_dependent_energies(BO_FILES):
     for BO_file in BO_FILES:
         e_qs = saver.load(BO_file)
         _save_time_dependent_eigenstates(e_qs, BO_file)
@@ -214,5 +214,5 @@ if __name__ == '__main__':
         f"12_BO_COMPARE_BO_1D_std_",
         f"12_BO_COMPARE_BO_1D_alt_",
     ]
-    # save_time_dependent_energies()
+    # save_time_dependent_energies(BO_FILES)
     plot_time_dependent_eigenenergies()
