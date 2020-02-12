@@ -8,11 +8,11 @@ paper_plots_folder_path = Path(__file__).parent / PAPER_PLOTS_FOLDER
 paper_plots_folder_path.mkdir(exist_ok=True)
 
 LATEX_PREAMBLE = r"""
-\usepackage{upgreek}
 \usepackage{amsmath}
 \usepackage{amsfonts}
-\usepackage{braket}
 
+\def\ket#1{\mathinner{|{#1}\rangle}}
+\def\braket#1{\mathinner{\langle{#1}\rangle}}
 \newcommand{\ghzalt}{\ket{\mathrm{GHZ}_8^\mathrm{alt}}}
 \newcommand{\ghzstd}{\ket{\mathrm{GHZ}_8^\mathrm{std}}}
 
@@ -32,7 +32,7 @@ r"""
 # % \newcommand{\qa}{\mathpunct{\raisebox{.15\height}{\scalebox{0.7}{\rotatebox[origin=c]{90}{$\LEFTcircle$}}}}}
 # % \newcommand{\qb}{\mathpunct{\raisebox{.15\height}{\scalebox{0.7}{\rotatebox[origin=c]{90}{$\RIGHTcircle$}}}}}
 plt.rc('text', usetex=True)
-plt.rc('font', family="serif", serif="CMU Serif")
+# plt.rc('font', family="serif", serif="CMU Serif")
 plt.rc('text.latex', preamble=LATEX_PREAMBLE)
 plt.rc('figure', figsize=(3, 2.5))
 plt.rc('font',size = 16)

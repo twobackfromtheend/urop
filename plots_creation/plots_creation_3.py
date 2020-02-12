@@ -42,9 +42,15 @@ def _create_pxp_hamiltonian(N: int):
 def create_pxp_plots():
     N = 16
     pxp_hamiltonian = _create_pxp_hamiltonian(N)
-    pxp_eigenenergies, pxp_eigenstates = q.eigh(q.qu(pxp_hamiltonian, sparse=False))
+
+    with timer("Generating dense Hamiltonian"):
+        dense_hamiltonian = q.qu(pxp_hamiltonian, sparse=False, dtype=np.complex64)
+    with timer("Solving dense Hamiltonian"):
+        pxp_eigenenergies, pxp_eigenstates = q.eigh(dense_hamiltonian)
     # pxp_eigenenergies, pxp_eigenstates = q.eigh(q.qu(pxp_hamiltonian, sparse=False), autoblock=True)
 
+#     pxp_eigenenergies, pxp_eigenstates = q.eigh(pxp_hamiltonian, k=2 ** (N - 1))
+    
     pxp_eigenstates = pxp_eigenstates.T
 
     ghz_state_alt = AlternatingGHZState(N)
@@ -66,7 +72,8 @@ def create_pxp_plots():
                      (r'$\ket{\mathbb{Z}_2} \equiv \ket{A_N}$', z2),
                      (r'$\ket{\mathrm{GHZ}_N^\mathrm{alt}}$', ghz_state_alt.get_state_tensor()),
                      (r'$\ket{\mathrm{GHZ}_N^\mathrm{std}}$', ghz_state_std.get_state_tensor()),
-                 ] + random_ghz_states
+    ]
+#                  ] + random_ghz_states
 
     states_count = len(all_states)
 
