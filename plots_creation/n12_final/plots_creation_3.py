@@ -28,7 +28,7 @@ DATA_PATH = Path(__file__).parent / "inst_eigenstates"
 
 def _save_time_dependent_eigenstates(e_qs: EvolvingQubitSystem, name: str):
     for i in tqdm(range(len(e_qs.Omega))):
-        if i % 10 != 0:
+        if i % 5 != 0:
             continue
         _Omega = e_qs.Omega[i]
         _Delta = e_qs.Delta[i]
