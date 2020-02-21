@@ -166,12 +166,12 @@ class SpinHamiltonianWithFields(SpinHamiltonian):
     def _get_offset_field(N: int, i: int) -> float:
         if N <= 8:
             if i == 0 or i == N - 1:
-                return -4.5e6
+                return -4.5e6 * 2 * np.pi
         else:
             if i == 0 or i == N - 1:
-                return -6e6
-            if i == 2 or i == N - 3:
-                return -1.5e6
+                return -6e6 * 2 * np.pi
+            if i == 3 or i == N - 4:
+                return -1.5e6 * 2 * np.pi
         return 0
 
     def get_hamiltonian(self, V: float, geometry: BaseGeometry, Omega: float, Delta: float) -> QType:
