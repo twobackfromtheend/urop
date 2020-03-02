@@ -15,7 +15,8 @@ from plots_creation.n12_final.utils import save_current_fig
 from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 
 # COLORMAP = 'viridis_r'
-_cmap = plt.cm.get_cmap('gist_yarg')(np.linspace(0, 1, 100) ** 0.7)
+_cmap = plt.cm.get_cmap('Blues')(np.linspace(0, 1, 100) ** 0.5)
+# _cmap = plt.cm.get_cmap('gist_yarg')(np.linspace(0, 1, 100) ** 0.7)
 _cmap = _cmap[:-10]
 COLORMAP = ListedColormap(_cmap)
 COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
@@ -103,6 +104,10 @@ def _plot_N_pc_and_populations(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, 
 
     ax2.set_xlabel(r"Time [$\upmu$s]")
     ax2.set_ylim((0, number_of_states))
+
+    # ax2.set_ylim((number_of_states - 50, number_of_states))
+    # ax2.set_ylim((0, 50))
+
     # ax1.set_ylim([0, ax1.get_ylim()[1]])
     ax1.set_ylim([0, ax1.get_ylim()[1]])
     ax1.grid()
@@ -125,7 +130,6 @@ def plot_N_pc(bo_files: List[str], names: str):
     gs = GridSpec(**gridspec_kwargs)
 
     # fig, (axs) = plt.subplots(2, 3, sharex='col', sharey='row', figsize=(16, 6), gridspec_kw=gridspec_kwargs)
-    ax1 = ax2 = None
     for col, BO_file in enumerate(bo_files):
         e_qs = saver.load(BO_file)
         # if ax1 is None:
@@ -155,14 +159,17 @@ def plot_N_pc(bo_files: List[str], names: str):
     # cbar.ax.set_yticklabels(['$< 0.0001$', '$0.001$', '$0.01$', '$0.1$', '$1$'])
     cbar.ax.set_yticklabels(['$< 10^{-4}$', '$10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])
     cbar.ax.set_ylabel(r"Eigenstate population")
-
+    # plt.show()
     save_current_fig(name)
+    # save_current_fig(name + "_zoomed_high")
+    # save_current_fig(name + "_zoomed_low")
 
 
 if __name__ == '__main__':
     for bo_files, name in [
-        ([f"12_BO_COMPARE_BO_1D_std_", f"12_BO_COMPARE_BO_1D_alt_", ], "npc_1d"),
-        ([f"12_BO_COMPARE_BO_2D_std_", f"12_BO_COMPARE_BO_2D_alt_", ], "npc_2d"),
-        ([f"12_BO_COMPARE_BO_3D_std_", f"12_BO_COMPARE_BO_3D_alt_", ], "npc_3d"),
+        ([f"12_BO_COMPARE_BO_WIDER_1D_std_", f"12_BO_COMPARE_BO_WIDER_1D_alt_", ], "npc_1d"),
+        # ([f"12_BO_COMPARE_BO_1D_std_", f"12_BO_COMPARE_BO_1D_alt_", ], "npc_1d"),
+        # ([f"12_BO_COMPARE_BO_2D_std_", f"12_BO_COMPARE_BO_2D_alt_", ], "npc_2d"),
+        # ([f"12_BO_COMPARE_BO_3D_std_", f"12_BO_COMPARE_BO_3D_alt_", ], "npc_3d"),
     ]:
         plot_N_pc(bo_files, name)

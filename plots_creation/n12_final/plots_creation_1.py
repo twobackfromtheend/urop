@@ -32,7 +32,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
     ax1.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * 1e6)))
     ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x / 1e9)))
 
-    ax1.plot(e_qs.solved_t_list, [Omega(t) for t in e_qs.solved_t_list], color=Omega_color, lw=3, alpha=0.8)
+    ax1.plot(e_qs.solved_t_list, [Omega(t) for t in e_qs.solved_t_list], color=Omega_color, lw=3, ls="--", alpha=0.8)
     ax1.locator_params(nbins=3, axis='x')
 
     Delta_ax = ax1
@@ -73,7 +73,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
             ax2.legend(loc=9)
             PLOTTED_LEGEND = True
     if not first_row:
-        ax2.set_xlabel(r"[$\upmu$s]")
+        ax2.set_xlabel(r"Time [$\upmu$s]")
 
     ax2.set_ylim((-0.1, 1.1))
     ax2.yaxis.set_ticks([0, 0.5, 1])
@@ -89,7 +89,10 @@ def plot_BO_geometries_and_GHZ():
     for col, shape in enumerate([(12,), (4, 3), (3, 2, 2)]):
         D = len(shape)
         for row, ghz in enumerate(["std", "alt"]):
-            BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
+            if D == 1:
+                BO_file = f"12_BO_COMPARE_BO_WIDER_{D}D_{ghz}_"
+            else:
+                BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
 
             # if e_qs is None:
             #     e_qs = saver.load(BO_file)
@@ -156,5 +159,5 @@ def zoomed_plots_near_final():
 
 
 if __name__ == '__main__':
-    # plot_BO_geometries_and_GHZ()
-    zoomed_plots_near_final()
+    plot_BO_geometries_and_GHZ()
+    # zoomed_plots_near_final()

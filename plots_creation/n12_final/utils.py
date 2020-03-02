@@ -39,7 +39,7 @@ plt.rc('text', usetex=True)
 plt.rc('font', family="serif", serif="CMU Serif")
 plt.rc('text.latex', preamble=LATEX_PREAMBLE)
 plt.rc('figure', figsize=(3, 2.5))
-plt.rc('font',size = 16)
+plt.rc('font', size=16)
 
 
 def save_current_fig(name: str):

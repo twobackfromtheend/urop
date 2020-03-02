@@ -15,18 +15,18 @@ from plots_creation.n12_final.utils import save_current_fig
 
 _cmap = plt.cm.get_cmap('plasma_r')(np.linspace(0, 1, 300))
 _cmap = _cmap[:-10]
-_cmap[:, -1] = np.linspace(0, 1, len(_cmap))
-COLORMAP = ListedColormap(_cmap)
-COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
-NORM = Normalize(vmin=0, vmax=1, clip=True)
+# _cmap[:, -1] = np.linspace(0, 1, len(_cmap))
+# COLORMAP = ListedColormap(_cmap)
+# COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
+# NORM = Normalize(vmin=0, vmax=1, clip=True)
 
 
 # _cmap = plt.cm.get_cmap('plasma_r')(np.linspace(0, 1, 300))
 # _cmap = _cmap[:-10]
-# _cmap[:, -1] = np.linspace(0.3, 1, len(_cmap))
-# COLORMAP = ListedColormap(_cmap)
-# COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
-# NORM = LogNorm(vmin=1e-3, vmax=1, clip=True)
+_cmap[:, -1] = np.linspace(0.3, 1, len(_cmap))
+COLORMAP = ListedColormap(_cmap)
+COLORMAP_CBAR = ListedColormap(_cmap[:, :-1])
+NORM = LogNorm(vmin=1e-3, vmax=1, clip=True)
 
 
 def plot_magnetisation():
@@ -79,11 +79,11 @@ def plot_magnetisation():
             'nrows': 1,
             'ncols': 2,
             'wspace': 0.1,
-            'width_ratios': [15, 1],
-            'top': 0.96, 'bottom': 0.18, 'left': 0.2, 'right': 0.8
+            'width_ratios': [20, 1],
+            'top': 0.95, 'bottom': 0.2, 'left': 0.15, 'right': 0.8
         }
         gs = GridSpec(**gridspec_kwargs)
-        fig = plt.figure(figsize=(5, 3.5))
+        fig = plt.figure(figsize=(5.5, 3))
         ax1 = fig.add_subplot(gs[0, 0])
         cax = fig.add_subplot(gs[:, 1])
 
@@ -122,9 +122,9 @@ def plot_magnetisation():
         ax1.grid()
 
         mappable = ScalarMappable(norm=NORM, cmap=COLORMAP_CBAR)
-        cbar = plt.colorbar(mappable, cax=cax)
-        # cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-3, 1e-2, 1e-1, 1])
-        # cbar.ax.set_yticklabels(['$10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])
+        # cbar = plt.colorbar(mappable, cax=cax)
+        cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-3, 1e-2, 1e-1, 1])
+        cbar.ax.set_yticklabels(['$10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])
         # cbar = plt.colorbar(mappable, cax=cax, ticks=[1e-3, 1e-2, 1e-1, 1], extend='min')
         # cbar.ax.set_yticklabels(['$< 10^{-3}$', '$10^{-2}$', '$10^{-1}$', '$1$'])
         cbar.ax.set_ylabel(r"Eigenstate population")
@@ -138,11 +138,14 @@ def plot_magnetisation():
 
 if __name__ == '__main__':
     BO_FILES = [
-        f"12_BO_COMPARE_BO_3D_std_",
-        f"12_BO_COMPARE_BO_3D_alt_",
-        f"12_BO_COMPARE_BO_2D_std_",
-        f"12_BO_COMPARE_BO_2D_alt_",
-        f"12_BO_COMPARE_BO_1D_std_",
-        f"12_BO_COMPARE_BO_1D_alt_",
+        # f"12_BO_COMPARE_BO_3D_std_",
+        # f"12_BO_COMPARE_BO_3D_alt_",
+        # f"12_BO_COMPARE_BO_2D_std_",
+        # f"12_BO_COMPARE_BO_2D_alt_",
+        # f"12_BO_COMPARE_BO_1D_std_",
+        # f"12_BO_COMPARE_BO_1D_alt_",
+
+        f"12_BO_COMPARE_BO_WIDER_1D_std_",
+        f"12_BO_COMPARE_BO_WIDER_1D_alt_",
     ]
     plot_magnetisation()

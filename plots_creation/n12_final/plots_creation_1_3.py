@@ -1,16 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import quimb as q
 from matplotlib import ticker
 from matplotlib.axes import Axes
+from numba import jit
 from scipy import interpolate
 from tqdm import tqdm
 
 import interaction_constants
 from optimised_protocols import saver
-from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 from plots_creation.n12_final.utils import save_current_fig
-from qubit_system.utils.states import get_product_basis_states_index
+from qubit_system.qubit_systems.evolving_qubit_system import EvolvingQubitSystem
 
 N = 12
 LATTICE_SPACING = 1.5e-6
@@ -21,7 +20,33 @@ C6 = interaction_constants.get_C6(N_RYD)
 PLOTTED_LEGEND = False
 
 
-def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, with_antisymmetric_ghz: bool,
+@jit(nopython=True)
+def get_figure_of_merit(state, state_index_1: int, state_index_2: int):
+    density_matrix = state @ state.conjugate().transpose()
+    # print(density_matrix.shape)
+    rho_00 = density_matrix[state_index_1, state_index_1].real
+    rho_11 = density_matrix[state_index_2, state_index_2].real
+    off_diag_1 = density_matrix[state_index_2, state_index_1]
+    # off_diag_2 = density_matrix[state_index_1, state_index_2]
+    # off_diagonal = np.abs(off_diag_1) + np.abs(off_diag_2)
+    off_diagonal = 2 * np.abs(off_diag_1).real
+    result = (rho_00 + rho_11 + off_diagonal) / 2
+    # diag = (rho_11 * rho_00) ** 0.5
+    # abs_offdiag = abs(off_diag_1)
+    # print(diag, abs_offdiag, diag==abs_offdiag)
+    # print(result, rho_00, rho_11, off_diag_1, off_diag_2)
+
+    # print(state.shape)
+    # state_2 = state[state_index_2, 0]
+    # state_1 = state[state_index_1, 0]
+    # print(state_1 ** 2, state_2 ** 2, state_2 * state_1, state_1, state_2, 'what')
+
+    # ghz_fidelity = q.fidelity(state, ghz)
+    # print(result, ghz_fidelity)
+    return result
+
+
+def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
                                 first: bool, last: bool, first_row: bool):
     Omega = interpolate.interp1d(e_qs.t_list, np.hstack((e_qs.Omega, e_qs.Omega[-1])), kind="previous",
                                  fill_value="extrapolate")
@@ -34,11 +59,17 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
     ax1.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * 1e6)))
     ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x / 1e9)))
 
-    ax1.plot(e_qs.solved_t_list, [Omega(t) for t in e_qs.solved_t_list], color=Omega_color, lw=3, alpha=0.8)
+    ax1.plot(e_qs.solved_t_list, [Omega(t) for t in e_qs.solved_t_list],
+             color=Omega_color,
+             label=r"$\Omega$",
+             lw=3, ls='--', alpha=0.8)
     ax1.locator_params(nbins=3, axis='x')
 
     Delta_ax = ax1
-    Delta_ax.plot(e_qs.solved_t_list, [Delta(t) for t in e_qs.solved_t_list], color=Delta_color, lw=3, alpha=0.8)
+    Delta_ax.plot(e_qs.solved_t_list, [Delta(t) for t in e_qs.solved_t_list],
+                  color=Delta_color,
+                  label=r"$\Delta$",
+                  lw=3, alpha=0.8)
 
     ax1.locator_params(nbins=4, axis='y')
     if first:
@@ -54,46 +85,25 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
     state_index_1 = ghz_components[0].argmax()
     state_index_2 = ghz_components[1].argmax()
 
-    def get_figure_of_merit(state):
-        density_matrix = state @ state.H
-        # print(density_matrix.shape)
-        rho_00 = density_matrix[state_index_1, state_index_1]
-        rho_11 = density_matrix[state_index_2, state_index_2]
-        off_diag_1 = density_matrix[state_index_2, state_index_1]
-        off_diag_2 = density_matrix[state_index_1, state_index_2]
-        off_diagonal = np.abs(off_diag_1 + off_diag_2)
-        result = (rho_00 + rho_11 + off_diagonal) / 2
-        diag = (rho_11 * rho_00) ** 0.5
-        abs_offdiag = abs(off_diag_1)
-        print(diag, abs_offdiag, diag==abs_offdiag)
-        print(result, rho_00, rho_11, off_diag_1, off_diag_2)
-
-        # print(state.shape)
-        # state_2 = state[state_index_2, 0]
-        # state_1 = state[state_index_1, 0]
-        # print(state_1 ** 2, state_2 ** 2, state_2 * state_1, state_1, state_2, 'what')
-
-        ghz_fidelity = q.fidelity(state, ghz)
-        print(result, ghz_fidelity)
-        return result
-
-    get_figure_of_merit(e_qs.solved_states[-1])
-    return
+    # get_figure_of_merit(e_qs.solved_states[-1])
+    # return
 
     foms = []
-    skip_i = 1
-    for _instantaneous_state in tqdm(e_qs.solved_states[::skip_i]):
-        foms.append(get_figure_of_merit(_instantaneous_state))
+    # skip_i = 1
+    # for _instantaneous_state in tqdm(e_qs.solved_states[::skip_i]):
+    for _instantaneous_state in tqdm(e_qs.solved_states):
+        foms.append(get_figure_of_merit(_instantaneous_state, state_index_1, state_index_2))
 
     ax2.plot(
-        e_qs.solved_t_list[::skip_i],
+        # e_qs.solved_t_list[::skip_i],
+        e_qs.solved_t_list,
         foms,
-        lw=1,
+        lw=3,
         alpha=0.8,
         color="C2",
     )
     if not first_row:
-        ax2.set_xlabel(r"[$\upmu$s]")
+        ax2.set_xlabel(r"Time [$\upmu$s]")
 
     ax2.set_ylim((-0.1, 1.1))
     ax2.yaxis.set_ticks([0, 0.5, 1])
@@ -108,7 +118,12 @@ def plot_BO_geometries_and_GHZ():
     e_qs = None
     for col, D in enumerate([1, 2, 3]):
         for row, ghz in enumerate(["std", "alt"]):
-            BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
+            # if not (col == 2 and ghz == "std"):
+            #     continue
+            if D == 1:
+                BO_file = f"12_BO_COMPARE_BO_WIDER_{D}D_{ghz}_"
+            else:
+                BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
 
             # if e_qs is None:
             #     e_qs = saver.load(BO_file)
@@ -118,14 +133,22 @@ def plot_BO_geometries_and_GHZ():
             ax1 = fig.add_subplot(gs[row_, col])
             ax2 = fig.add_subplot(gs[row_ + 1, col], sharex=ax1)
             _plot_protocol_and_fidelity(
-                ax1, ax2, e_qs, with_antisymmetric_ghz=True,
+                ax1, ax2, e_qs,
                 first=col == 0, last=col == 2,
                 first_row=row_ == 0
             )
-            ghz_ket = r"\ghzstd" if ghz == "std" else r"\ghzalt"
-            ax1.set_title(f"{D}D,  " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
+
+            ghz_ket = r"\ghzstdd" if "std" in BO_file else r"\ghzaltd"
+            ghz_ket += "{" + str(D) + "}"
+            ax1.set_title(f"${ghz_ket}$")
+
+            # ghz_ket = r"\ghzstd" if ghz == "std" else r"\ghzalt"
+            # ax1.set_title(f"{D}D,  " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
             ax1.get_xaxis().set_visible(False)
-    # save_current_fig("new_fid_bo_geometries_ghz_protocol_and_fidelity")
+            # if col == 2 and ghz == "std":
+            #     ax1.legend(loc=9, framealpha=1)
+    save_current_fig("new_fid_bo_geometries_ghz_protocol_and_fidelity")
+    # save_current_fig("new_fid_bo_geometries_ghz_protocol_and_fidelity_legend")
 
 
 if __name__ == '__main__':
