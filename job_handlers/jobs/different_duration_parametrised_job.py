@@ -79,7 +79,8 @@ geometry_envvar = getenv("Q_GEOMETRY")
 geometry = eval(geometry_envvar)
 ghz_state_envvar = getenv("Q_GHZ_STATE")
 ghz_state = eval(ghz_state_envvar)
-t = getenv("Q_T")
+t_envvar = getenv("Q_T")
+t = eval(t_envvar)
 tukey_alpha = eval(getenv("TUKEY_ALPHA"))
 
 max_iter = int(getenv("BO_MAX_ITER"))
@@ -91,6 +92,8 @@ print(
     f"\tN: {N}\n"
     f"\tQ_GEOMETRY: {geometry} ({geometry_envvar})\n"
     f"\tQ_GHZ_STATE: {ghz_state} ({ghz_state_envvar})\n"
+    f"\tQ_T: {t} ({t_envvar})\n"
+    f"\tTUKEY_ALPHA: {tukey_alpha}\n"
     f"\tBO_MAX_ITER: {max_iter}\n"
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
 )
