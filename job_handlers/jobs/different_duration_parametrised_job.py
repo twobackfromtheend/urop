@@ -11,6 +11,7 @@ from ifttt_webhook import trigger_event
 from job_handlers.crossing import get_ghz_crossing
 from job_handlers.hamiltonian import SpinHamiltonian, QType
 from job_handlers.jobs.bo_utils import get_domain, optimise
+from job_handlers.jobs.job_utils import get_geometry_and_ghz_state
 from job_handlers.solver import solve_with_protocol
 from job_handlers.timer import timer
 from protocol_generator.base_protocol_generator import BaseProtocolGenerator
@@ -76,9 +77,8 @@ def getenv(key: str):
 job_id = getenv("PBS_JOBID")
 N = int(getenv("N"))
 geometry_envvar = getenv("Q_GEOMETRY")
-geometry = eval(geometry_envvar)
 ghz_state_envvar = getenv("Q_GHZ_STATE")
-ghz_state = eval(ghz_state_envvar)
+geometry, ghz_state = get_geometry_and_ghz_state(geometry_envvar, ghz_state_envvar)
 t_envvar = getenv("Q_T")
 t = eval(t_envvar)
 tukey_alpha = eval(getenv("TUKEY_ALPHA"))
