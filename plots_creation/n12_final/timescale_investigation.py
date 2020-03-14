@@ -60,6 +60,23 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
     return f
 
 
+V_0_data = {
+    # Geometry: (Number of interactions, At X * lattice spacing)
+    '12_1d_alt': (1, 2),
+    '12_2d_alt': (1, 2 ** 0.5),
+    '12_3d_alt': (3, 2 ** 0.5),
+    '12_1d_std': (1, 1),
+    '12_2d_std': (2, 1),
+    '12_3d_std': (3, 1),
+}
+
+
+def calculate_V_0(q_ghz_state: str, lattice_spacing: float):
+    number_of_interactions, lattice_spacing_multiplier = V_0_data[q_ghz_state]
+    return number_of_interactions * C6 / (lattice_spacing * lattice_spacing_multiplier) ** 6
+
+
+
 if __name__ == '__main__':
     N = 12
     t = 1e-6
@@ -67,15 +84,16 @@ if __name__ == '__main__':
     N_RYD = 50
     C6 = interaction_constants.get_C6(N_RYD)
     print(f"C6: {C6:.3e}")
-    _geometry, ghz_state = get_geometry_and_ghz_state('', os.getenv('Q_GHZ_STATE'))
+    q_ghz_state = os.getenv('Q_GHZ_STATE', '12_2d_alt')
+    _geometry, ghz_state = get_geometry_and_ghz_state('', q_ghz_state)
     interpolation_timesteps = 3000
     t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
     spin_ham = SpinHamiltonian.load(N)
     for lattice_spacing in np.linspace(1e-6, 4e-6, 5):
-        print(f"\nLattice Spacing: {lattice_spacing:.3e}")
+        print(f"\nLattice Spacing: {lattice_spacing:.5e}")
         characteristic_V = C6 / (lattice_spacing ** 6)
-        print(f"Characteristic V: {characteristic_V:.3e} Hz")
+        print(f"Characteristic V: {characteristic_V:.5e} Hz")
 
         geometry = RegularLattice(shape=_geometry.shape, spacing=lattice_spacing)
         crossing = get_ghz_crossing(
@@ -84,7 +102,10 @@ if __name__ == '__main__':
             V=C6
         )
 
-        for g in [0.1, 0.5, 0.8, 1, 1.2, 1.5, 2, 5, 10]:
+        V_0 = calculate_V_0(q_ghz_state, lattice_spacing)
+        print(f'V_0: {V_0:.5e} Hz')
+
+        for g in [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.2, 1.5, 2, 5, 10]:
             # g = max Omega / V0
 
             spin_ham.reset_geometry()
@@ -101,8 +122,10 @@ if __name__ == '__main__':
                 protocol_generator=protocol_generator,
             )
 
-            Omega = g * crossing
+            Omega = g * V_0
             Delta = crossing
 
+            blockade_radius = (C6 / (2 * Omega)) ** (1 / 6)
+            print(f"Rydberg blockade radius: {blockade_radius :.3e}, ({blockade_radius / lattice_spacing:.3f} a)")
+
             fom = f(np.array([Omega] * 3 + [Delta] * 3))
-            # print(f"Crossing: {crossing:.3e}")
