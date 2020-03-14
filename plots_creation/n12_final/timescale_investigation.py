@@ -67,24 +67,26 @@ if __name__ == '__main__':
     N_RYD = 50
     C6 = interaction_constants.get_C6(N_RYD)
     print(f"C6: {C6:.3e}")
-    _geometry, ghz_state = get_geometry_and_ghz_state('', '12_2d_std')
+    _geometry, ghz_state = get_geometry_and_ghz_state('', os.getenv('Q_GHZ_STATE'))
     interpolation_timesteps = 3000
     t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
     spin_ham = SpinHamiltonian.load(N)
     for lattice_spacing in np.linspace(1e-6, 4e-6, 5):
+        print(f"\nLattice Spacing: {lattice_spacing:.3e}")
+        characteristic_V = C6 / (lattice_spacing ** 6)
+        print(f"Characteristic V: {characteristic_V:.3e} Hz")
+
+        geometry = RegularLattice(shape=_geometry.shape, spacing=lattice_spacing)
+        crossing = get_ghz_crossing(
+            spin_ham=spin_ham, characteristic_V=characteristic_V,
+            ghz_state=ghz_state, geometry=geometry,
+            V=C6
+        )
+
         for g in [0.1, 0.5, 0.8, 1, 1.2, 1.5, 2, 5, 10]:
             # g = max Omega / V0
-            print(f"\nLattice Spacing: {lattice_spacing:.3e}")
-            characteristic_V = C6 / (lattice_spacing ** 6)
-            print(f"Characteristic V: {characteristic_V:.3e} Hz")
 
-            geometry = RegularLattice(shape=_geometry.shape, spacing=lattice_spacing)
-            crossing = get_ghz_crossing(
-                spin_ham=spin_ham, characteristic_V=characteristic_V,
-                ghz_state=ghz_state, geometry=geometry,
-                V=C6
-            )
             spin_ham.reset_geometry()
 
             protocol_generator = InterpolationPG(t_list, kind="cubic")
