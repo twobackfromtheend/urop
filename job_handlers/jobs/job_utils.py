@@ -1,3 +1,4 @@
+import os
 import re
 from qubit_system.geometry import *
 
@@ -8,6 +9,7 @@ LATTICE_SPACING = 1.5e-6
 
 def get_geometry_and_ghz_state(geometry_envvar: str, ghz_state_envvar: str):
     try:
+        N = int(os.getenv("N"))
         return eval(geometry_envvar), eval(ghz_state_envvar)
     except Exception:
         match = re.match(r"^(\d+)_(\d)d_(std|alt)$", ghz_state_envvar)
