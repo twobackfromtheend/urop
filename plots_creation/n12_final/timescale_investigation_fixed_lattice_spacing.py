@@ -93,6 +93,10 @@ if __name__ == '__main__':
     print(f"q_ghz_state: {q_ghz_state}")
     _geometry, ghz_state = get_geometry_and_ghz_state('', q_ghz_state)
 
+    q_slope_envvar = os.getenv('Q_SLOPE', '1e9 / 1e-6')
+    q_slope = eval(q_slope_envvar)
+    print(f"q_slope: {q_slope} ({q_slope_envvar})")
+
     spin_ham = SpinHamiltonian.load(N)
     lattice_spacing = 1.5e-6
     print(f"\nLattice Spacing: {lattice_spacing:.5e}")
