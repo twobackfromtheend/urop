@@ -93,7 +93,7 @@ if __name__ == '__main__':
     print(f"q_ghz_state: {q_ghz_state}")
     _geometry, ghz_state = get_geometry_and_ghz_state('', q_ghz_state)
 
-    q_slope_envvar = os.getenv('Q_SLOPE', '1e9 / 1e-6')
+    q_slope_envvar = os.getenv('Q_SLOPE', '1e9 / 1e-6')  # Hz / s
     q_slope = eval(q_slope_envvar)
     print(f"q_slope: {q_slope} ({q_slope_envvar})")
 
@@ -113,14 +113,12 @@ if __name__ == '__main__':
     V_0 = calculate_V_0(q_ghz_state, lattice_spacing)
     print(f'V_0: {V_0:.5e} Hz')
 
-    slope = 1e9 / 1e-6  # Hz / s
-
 
     def get_protocol(input_: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         Omega_1, Omega_2, Delta_1, Delta_2 = input_
 
-        ramp_up_duration = Omega_1 / slope
-        ramp_down_duration = Omega_2 / slope
+        ramp_up_duration = Omega_1 / q_slope
+        ramp_down_duration = Omega_2 / q_slope
         between_duration = (ramp_up_duration + ramp_down_duration) / 2
 
         t = ramp_up_duration + ramp_down_duration + between_duration
