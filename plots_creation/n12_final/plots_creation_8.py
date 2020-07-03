@@ -25,7 +25,8 @@ def _plot_N_pc_and_entropy(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem, firs
         sum_powers = np.sum((np.power(np.abs(state), 4)))
         N_pc = 1 / sum_powers
         N_pcs.append(N_pc)
-        entropy = q.calc.entropy_subsys(state, [2] * e_qs.N, np.arange(e_qs.N / 2))
+        # entropy = q.calc.entropy_subsys(state, [2] * e_qs.N, np.arange(e_qs.N / 2))
+        entropy = q.calc.entropy_subsys(state, [2] * e_qs.N, [2, 5, 8, 11, 1, 4])
         entropies.append(entropy)
     ax1.plot(
         e_qs.solved_t_list, N_pcs,
@@ -99,8 +100,9 @@ def plot_eigenstate_stats(bo_files: List[str], name: str):
 
 if __name__ == '__main__':
     for bo_files, name in [
-        ([f"12_BO_COMPARE_BO_WIDER_1D_std_", f"12_BO_COMPARE_BO_WIDER_1D_alt_", ], "eigenstate_stats_1d"),
+        # ([f"12_BO_COMPARE_BO_WIDER_1D_std_", f"12_BO_COMPARE_BO_WIDER_1D_alt_", ], "eigenstate_stats_1d"),
+        # ([f"12_BO_COMPARE_BO_1D_std_", f"12_BO_COMPARE_BO_1D_alt_", ], "eigenstate_stats_1d_old"),
         ([f"12_BO_COMPARE_BO_2D_std_", f"12_BO_COMPARE_BO_2D_alt_", ], "eigenstate_stats_2d"),
-        ([f"12_BO_COMPARE_BO_3D_std_", f"12_BO_COMPARE_BO_3D_alt_", ], "eigenstate_stats_3d"),
+        # ([f"12_BO_COMPARE_BO_3D_std_", f"12_BO_COMPARE_BO_3D_alt_", ], "eigenstate_stats_3d"),
     ]:
         plot_eigenstate_stats(bo_files, name)

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import ticker
 from matplotlib.axes import Axes
+from matplotlib.gridspec import GridSpec
 from numba import jit
 from scipy import interpolate
 from tqdm import tqdm
@@ -24,31 +25,15 @@ PLOTTED_LEGEND = False
 @jit(nopython=True)
 def get_figure_of_merit(state, state_index_1: int, state_index_2: int):
     density_matrix = state @ state.conjugate().transpose()
-    # print(density_matrix.shape)
     rho_00 = density_matrix[state_index_1, state_index_1].real
     rho_11 = density_matrix[state_index_2, state_index_2].real
     off_diag_1 = density_matrix[state_index_2, state_index_1]
-    # off_diag_2 = density_matrix[state_index_1, state_index_2]
-    # off_diagonal = np.abs(off_diag_1) + np.abs(off_diag_2)
     off_diagonal = 2 * np.abs(off_diag_1).real
     result = (rho_00 + rho_11 + off_diagonal) / 2
-    # diag = (rho_11 * rho_00) ** 0.5
-    # abs_offdiag = abs(off_diag_1)
-    # print(diag, abs_offdiag, diag==abs_offdiag)
-    # print(result, rho_00, rho_11, off_diag_1, off_diag_2)
-
-    # print(state.shape)
-    # state_2 = state[state_index_2, 0]
-    # state_1 = state[state_index_1, 0]
-    # print(state_1 ** 2, state_2 ** 2, state_2 * state_1, state_1, state_2, 'what')
-
-    # ghz_fidelity = q.fidelity(state, ghz)
-    # print(result, ghz_fidelity)
     return result, rho_00, rho_11, off_diagonal
 
 
-def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
-                                first: bool, last: bool, first_row: bool):
+def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem):
     Omega = interpolate.interp1d(e_qs.t_list, np.hstack((e_qs.Omega, e_qs.Omega[-1])), kind="previous",
                                  fill_value="extrapolate")
     Delta = interpolate.interp1d(e_qs.t_list, np.hstack((e_qs.Delta, e_qs.Delta[-1])), kind="previous",
@@ -65,6 +50,8 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
              label=r"$\Omega$",
              lw=3, ls='--', alpha=0.8)
     ax1.locator_params(nbins=3, axis='x')
+    ax1.locator_params(nbins=4, axis='y')
+    ax1.grid()
 
     Delta_ax = ax1
     Delta_ax.plot(e_qs.solved_t_list, [Delta(t) for t in e_qs.solved_t_list],
@@ -72,9 +59,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
                   label=r"$\Delta$",
                   lw=3, alpha=0.8)
 
-    ax1.locator_params(nbins=4, axis='y')
-    if first:
-        ax1.set_ylabel(r"[GHz]")
+    # ax1.set_ylabel(r"[GHz]")
 
     delta = (e_qs.t_list.max() - e_qs.t_list.min()) * 0.01
     ax1.set_xlim((e_qs.t_list.min() - delta, e_qs.t_list.max() + delta))
@@ -105,12 +90,13 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
         off_diags.append(off_diag)
 
     ax2.plot(
-        # e_qs.solved_t_list[::skip_i],
         e_qs.solved_t_list,
         foms,
         lw=3,
         alpha=0.8,
         color="C2",
+        zorder=2.1,
+        label=r"$\mathcal{F}$",
     )
 
     ax2.plot(
@@ -120,6 +106,7 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
         alpha=0.8,
         color="C3",
         ls='--',
+        label=r"$\rho_{00}$",
     )
     ax2.plot(
         e_qs.solved_t_list,
@@ -128,18 +115,20 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
         alpha=0.8,
         color="C4",
         ls='-.',
+        label=r"$\rho_{11}$",
     )
     ax2.plot(
         e_qs.solved_t_list,
-        np.array(off_diags) / 2,
+        off_diags,
         lw=2,
         alpha=0.8,
         color="C5",
         ls=':',
+        label=r"$\rho_{01} + \rho_{10}$",
     )
 
-    if not first_row:
-        ax2.set_xlabel(r"Time [$\upmu$s]")
+    # ax2.set_ylabel(r"")
+    ax2.set_xlabel(r"Time [$\upmu$s]")
 
     ax2.set_ylim((-0.1, 1.1))
     ax2.yaxis.set_ticks([0, 0.5, 1])
@@ -147,48 +136,72 @@ def _plot_protocol_and_fidelity(ax1: Axes, ax2: Axes, e_qs: EvolvingQubitSystem,
 
 
 def plot_BO_geometries_and_GHZ():
-    fig = plt.figure(figsize=(12, 7))
-    gs = fig.add_gridspec(5, 3, wspace=0.3, hspace=0.05, height_ratios=[1, 1, 0.5, 1, 1],
-                          top=0.93, bottom=0.09, left=0.08, right=0.98)
-    # fig, (axs) = plt.subplots(4, 3, sharex='col', figsize=(16, 6))
-    e_qs = None
-    for col, D in enumerate([1, 2, 3]):
-        for row, ghz in enumerate(["std", "alt"]):
-            # if not (col == 2 and ghz == "std"):
-            #     continue
-            if D == 1 and ghz == "alt":
-                BO_file = f"12_BO_COMPARE_BO_WIDER_{D}D_{ghz}_"
-            elif ghz == 'std':
-                BO_file = f"12_BO_SHORT_STD_{D}D_{ghz}_"
-            else:
-                BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
+    plt.rcParams['axes.labelpad'] = 2
 
-            # if e_qs is None:
-            #     e_qs = saver.load(BO_file)
-            e_qs = saver.load(BO_file)
+    gridspec_kwargs = {
+        'nrows': 2,
+        'ncols': 1,
+        'hspace': 0.05,
+        'top': 0.98, 'bottom': 0.18, 'left': 0.23, 'right': 0.97
+    }
+    gs = GridSpec(**gridspec_kwargs)
 
-            row_ = row * 3
-            ax1 = fig.add_subplot(gs[row_, col])
-            ax2 = fig.add_subplot(gs[row_ + 1, col], sharex=ax1)
-            # ax2 = fig.add_subplot(gs[row_ + 1, col])
-            _plot_protocol_and_fidelity(
-                ax1, ax2, e_qs,
-                first=col == 0, last=col == 2,
-                first_row=row_ == 0
-            )
+    for BO_file in BO_FILES:
+        ghz = 'alt' if '_alt_' in BO_file else 'std'
 
-            ghz_ket = r"\ghzstdd" if "std" in BO_file else r"\ghzaltd"
-            ghz_ket += "{" + str(D) + "}"
-            ax1.set_title(f"${ghz_ket}$")
+        e_qs = saver.load(BO_file)
 
-            # ghz_ket = r"\ghzstd" if ghz == "std" else r"\ghzalt"
-            # ax1.set_title(f"{D}D,  " + r"$\quad \ket{\psi_{\mathrm{target}}} = " + ghz_ket + "$")
-            ax1.get_xaxis().set_visible(False)
-            # if col == 2 and ghz == "std":
-            #     ax1.legend(loc=9, framealpha=1)
-    save_current_fig("new_fid_bo_geometries_ghz_protocol_and_fidelity")
-    # save_current_fig("new_fid_bo_geometries_ghz_protocol_and_fidelity_legend")
+        fig = plt.figure(figsize=(3.5, 3))
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+
+        _plot_protocol_and_fidelity(
+            ax1, ax2, e_qs,
+        )
+
+        ax1.text(
+            0.02, 0.79,
+            '[GHz]',
+            horizontalalignment='left',
+            verticalalignment='center',
+            rotation='vertical',
+            transform=fig.transFigure,
+        )
+        ax2.text(
+            0.02, 0.37,
+            r'$\mathcal{F}_\mathrm{' + ghz + '}$',
+            horizontalalignment='left',
+            verticalalignment='center',
+            rotation='vertical',
+            transform=fig.transFigure,
+        )
+
+        # ghz_ket = r"\ghzstdd" if "std" in BO_file else r"\ghzaltd"
+        # ghz_ket += "{" + str(D) + "}"
+        # ax1.set_title(f"${ghz_ket}$")
+
+        ax1.get_xaxis().set_visible(False)
+        save_current_fig(f"_new_protocol_and_fidelity_{BO_file}")
+
+        # ax2.legend(loc=9, framealpha=1)
+        # save_current_fig(f"_legend_new_protocol_and_fidelity_{BO_file}")
+        # raise RuntimeError()
 
 
 if __name__ == '__main__':
+    BO_FILES = [
+        # f"12_BO_SHORT_STD_1D_std_",
+        # f"12_BO_SHORT_STD_2D_std_",
+        # f"12_BO_SHORT_STD_3D_std_",
+        # f"12_BO_COMPARE_BO_WIDER_1D_alt_",
+        # f"12_BO_COMPARE_BO_2D_alt_",
+        # f"12_BO_COMPARE_BO_3D_alt_",
+        # "entanglement_entropy_ramp__8_2D_std",
+        "entanglement_entropy_ramp_2_8_2D_std",
+        "entanglement_entropy_ramp__12_2D_std",
+        # "entanglement_entropy_ramp__16_2D_std",
+        "entanglement_entropy_ramp__8_2D_alt",
+        "entanglement_entropy_ramp__12_2D_alt",
+        # "entanglement_entropy_ramp__16_2D_alt",
+    ]
     plot_BO_geometries_and_GHZ()

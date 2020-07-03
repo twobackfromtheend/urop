@@ -64,17 +64,16 @@ V_0_data = {
     # Geometry: (Number of interactions, At X * lattice spacing)
     '12_1d_alt': (1, 2),
     '12_2d_alt': (1, 2 ** 0.5),
-    '12_3d_alt': (3, 2 ** 0.5),
+    '12_3d_alt': (1, 2 ** 0.5),
     '12_1d_std': (1, 1),
-    '12_2d_std': (2, 1),
-    '12_3d_std': (3, 1),
+    '12_2d_std': (1, 1),
+    '12_3d_std': (1, 1),
 }
 
 
 def calculate_V_0(q_ghz_state: str, lattice_spacing: float):
     number_of_interactions, lattice_spacing_multiplier = V_0_data[q_ghz_state]
     return number_of_interactions * C6 / (lattice_spacing * lattice_spacing_multiplier) ** 6
-
 
 
 if __name__ == '__main__':

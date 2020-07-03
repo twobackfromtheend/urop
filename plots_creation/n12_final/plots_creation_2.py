@@ -45,9 +45,25 @@ def many_body_energy_spectrum(low_detuning: bool = False):
         y_lim = (-7e9, 10e9)
         name = f"energy_spectrum_{N}_1d2d3d"
     else:
-        detuning_limits = [-0.1e9, 0.7e9]
-        y_lim = (-2e9, 5e9)
-        name = f"energy_spectrum_{N}_1d2d3d_low_detuning"
+        # detuning_limits = [-0.1e9, 0.5e9]
+        # y_lim = (-2e9, 2e9)
+        # name = f"_new_energy_spectrum_{N}_1d2d3d_low_detuning"
+
+        detuning_limits = [-0.8e9, 3.8e9]
+        detuning_centres = [
+            1.802e7, 1.898e8, 3.221e8
+        ]
+        detuning_width = 0.6e9
+        y_lim = (-2e9, 2e9)
+        name = f"_new_energy_spectrum_{N}_1d2d3d_low_detuning_centred"
+
+        # detuning_limits = [-0.8e9, 3.8e9]
+        # detuning_centres = [
+        #     1.271e9, 2.137e9, 2.639e9
+        # ]
+        # detuning_width = 0.8e9
+        # y_lim = (-2e9, 2e9)
+        # name = f"_new_energy_spectrum_{N}_1d2d3d_high_detuning_centred"
 
     fig_kwargs = {'figsize': (8, 3.2)}
     # fig_kwargs = {'figsize': (8, 6)}
@@ -59,14 +75,15 @@ def many_body_energy_spectrum(low_detuning: bool = False):
         'wspace': 0.05,
         'hspace': 0.05
     }
-    fig, axs = plt.subplots(1, 3, sharey='all', sharex='all', **fig_kwargs, gridspec_kw=gridspec_kwargs)
+    # fig, axs = plt.subplots(1, 3, sharey='all', sharex='all', **fig_kwargs, gridspec_kw=gridspec_kwargs)
+    fig, axs = plt.subplots(1, 3, sharey='all', **fig_kwargs, gridspec_kw=gridspec_kwargs)
     for i, shape in enumerate([
-        (8,),
-        (4, 2),
-        (2, 2, 2),
-        # (12,),
-        # (4, 3),
-        # (3, 2, 2),
+        # (8,),
+        # (4, 2),
+        # (2, 2, 2),
+        (12,),
+        (4, 3),
+        (3, 2, 2),
         # (16,),
         # (4, 4),
         # (4, 2, 2),
@@ -121,7 +138,8 @@ def many_body_energy_spectrum(low_detuning: bool = False):
                     verticalalignment='top',
                     transform=ax.transAxes)
 
-        ax.set_xlim(detuning_limits)
+        # ax.set_xlim(detuning_limits)
+        ax.set_xlim((detuning_centres[i] - detuning_width / 2, detuning_centres[i] + detuning_width / 2))
         ax.set_ylim(y_lim)
         if i == 0:
             ax.set_ylabel("[GHz]")
@@ -133,8 +151,8 @@ def many_body_energy_spectrum(low_detuning: bool = False):
 
 
 if __name__ == '__main__':
-    N = 8
-    # N = 12
+    # N = 8
+    N = 12
     # N = 16
     # many_body_energy_spectrum()
     many_body_energy_spectrum(low_detuning=True)

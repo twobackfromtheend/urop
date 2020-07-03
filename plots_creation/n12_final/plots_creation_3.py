@@ -215,8 +215,17 @@ if __name__ == '__main__':
         # f"12_BO_COMPARE_BO_2D_alt_",
         # f"12_BO_COMPARE_BO_1D_std_",
         # f"12_BO_COMPARE_BO_1D_alt_",
-        f"12_BO_COMPARE_BO_WIDER_1D_std_",
-        f"12_BO_COMPARE_BO_WIDER_1D_alt_",
+        # f"12_BO_COMPARE_BO_WIDER_1D_std_",
+        # f"12_BO_COMPARE_BO_WIDER_1D_alt_",
+        # f"12_BO_SHORT_STD_1D_std_",
+        # f"12_BO_SHORT_STD_2D_std_",
+        # f"12_BO_SHORT_STD_3D_std_",
+        "entanglement_entropy_ramp__8_2D_std",
+        "entanglement_entropy_ramp__12_2D_std",
+        "entanglement_entropy_ramp__16_2D_std",
+        "entanglement_entropy_ramp__8_2D_alt",
+        "entanglement_entropy_ramp__12_2D_alt",
+        "entanglement_entropy_ramp__16_2D_alt",
     ]
-    # save_time_dependent_energies(BO_FILES)
-    plot_time_dependent_eigenenergies()
+    save_time_dependent_energies(BO_FILES)
+    # plot_time_dependent_eigenenergies()

@@ -82,8 +82,10 @@ def plot_BO_geometries_and_GHZ():
                           top=0.93, bottom=0.09, left=0.08, right=0.98)
     for col, D in enumerate([1, 2, 3]):
         for row, ghz in enumerate(["std", "alt"]):
-            BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
-
+            if D == 1:
+                BO_file = f"12_BO_COMPARE_BO_WIDER_{D}D_{ghz}_"
+            else:
+                BO_file = f"12_BO_COMPARE_BO_{D}D_{ghz}_"
             # if e_qs is None:
             #     e_qs = saver.load(BO_file)
             e_qs = saver.load(BO_file)
