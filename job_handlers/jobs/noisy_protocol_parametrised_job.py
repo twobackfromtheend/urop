@@ -5,6 +5,7 @@ from functools import partial
 
 import numpy as np
 import quimb as q
+from numba import jit
 
 import interaction_constants
 from ifttt_webhook import trigger_event
@@ -108,12 +109,25 @@ print(
     f"\tBO_EXPLOIT_ITER: {exploit_iter}\n"
 )
 
+@jit(nopython=True)
+def _get_figure_of_merit(state, state_index_1: int, state_index_2: int):
+    density_matrix = state @ state.conjugate().transpose()
+    rho_00 = density_matrix[state_index_1, state_index_1].real
+    rho_11 = density_matrix[state_index_2, state_index_2].real
+    off_diag_1 = density_matrix[state_index_2, state_index_1]
+    off_diagonal = 2 * np.abs(off_diag_1).real
+    result = (rho_00 + rho_11 + off_diagonal) / 2
+    return result, rho_00, rho_11, off_diagonal
 
 def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
           t_list: np.ndarray, psi_0: QType,
           ghz_state: BaseGHZState,
           protocol_generator: BaseProtocolGenerator):
-    ghz_state_tensor = ghz_state.get_state_tensor()
+    # ghz_state_tensor = ghz_state.get_state_tensor()
+
+    ghz_components = ghz_state._get_components()
+    state_index_1 = ghz_components[0].argmax()
+    state_index_2 = ghz_components[1].argmax()
 
     def f(inputs: np.ndarray) -> np.ndarray:
         """
@@ -131,7 +145,8 @@ def get_f(spin_ham: SpinHamiltonian, V: float, geometry: BaseGeometry,
                     spin_ham, V=V, geometry=geometry, t_list=t_list, psi_0=psi_0,
                     Omega=Omega, Delta=Delta
                 )
-                ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
+                ghz_fidelity, rho_00, rho_11, off_diag = _get_figure_of_merit(final_state, state_index_1, state_index_2)
+                # ghz_fidelity = q.fidelity(final_state, ghz_state_tensor)
                 print(f"fidelity: {ghz_fidelity:.3f} for input: {input_}")
                 fidelities.append(ghz_fidelity)
             return 1 - np.mean(fidelities)
