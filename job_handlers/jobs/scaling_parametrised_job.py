@@ -62,7 +62,7 @@ exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
 
 tukey_alpha = eval(getenv("TUKEY_ALPHA"))
 setup = getenv("SETUP")
-
+do_only_16 = os.getenv(eval("ONLY_16"), False)
 
 print(
     "Parameters:\n"
@@ -236,6 +236,9 @@ if __name__ == '__main__':
     t_list = np.linspace(0, t, interpolation_timesteps + 1)
 
     for N, (geometry, ghz_state) in setup_details[setup].items():
+        if do_only_16:
+            if N != 16:
+                continue
         with timer(f"Loading SpinHam (N={N})"):
             spin_ham = SpinHamiltonian.load(N)
 
