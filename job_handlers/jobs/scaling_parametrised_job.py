@@ -62,7 +62,7 @@ exploit_iter = int(getenv("BO_EXPLOIT_ITER"))
 
 tukey_alpha = eval(getenv("TUKEY_ALPHA"))
 setup = getenv("SETUP")
-do_only_16 = os.getenv(eval("ONLY_16"), False)
+do_only_16 = eval(os.getenv("ONLY_16", "False"))
 
 print(
     "Parameters:\n"
