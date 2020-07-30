@@ -30,12 +30,12 @@ class EvolvingQubitSystem(BaseQubitSystem):
         self.Delta = Delta
         self.t_list = t_list
 
-        end_points = 0
-        self.Omega = np.concatenate([self.Omega, np.zeros(end_points)])
-        # self.Delta = np.concatenate([self.Delta, np.linspace(self.Delta[-1], 0, end_points)])
-        self.Delta = np.concatenate([self.Delta, np.ones(end_points) * self.Delta[-1]])
-        dt = self.t_list[1]
-        self.t_list = np.concatenate([self.t_list, np.arange(1, end_points + 1) * dt + self.t_list[-1]])
+        # end_points = 0
+        # self.Omega = np.concatenate([self.Omega, np.zeros(end_points)])
+        # # self.Delta = np.concatenate([self.Delta, np.linspace(self.Delta[-1], 0, end_points)])
+        # self.Delta = np.concatenate([self.Delta, np.ones(end_points) * self.Delta[-1]])
+        # dt = self.t_list[1]
+        # self.t_list = np.concatenate([self.t_list, np.arange(1, end_points + 1) * dt + self.t_list[-1]])
 
         assert len(t_list) - 1 == len(Omega) == len(Delta), \
             "Omega and Delta need to be of equal length, and of length one less than t_list"
