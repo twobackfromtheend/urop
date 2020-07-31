@@ -222,6 +222,42 @@ setup_details = {
             CustomGHZState(16, [True, False, False, True, False, True, True, False] * 2)
         ),
     },
+    '2d_std_new': {
+        4: (
+            RegularLattice((2, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(4, [True] * 4)
+        ),
+        6: (
+            RegularLattice((3, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(6, [True] * 6)
+        ),
+        8: (
+            RegularLattice((4, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(8, [True] * 8)
+        ),
+        10: (
+            RegularLattice((5, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(10, [True] * 10)
+        ),
+    },
+    '2d_alt_new': {
+        4: (
+            RegularLattice((2, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(4, [True, False, False, True])
+        ),
+        6: (
+            RegularLattice((3, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(6, [True, False, False, True, True, False])
+        ),
+        8: (
+            RegularLattice((4, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(8, [True, False, False, True] * 2)
+        ),
+        10: (
+            RegularLattice((5, 2), spacing=LATTICE_SPACING),
+            CustomGHZState(10, [True, False, False, True] * 2 + [True, False])
+        ),
+    },
 }
 
 
